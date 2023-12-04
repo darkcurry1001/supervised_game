@@ -10,6 +10,18 @@ def load_image(path):
     return img
 
 
+def load_transparent_image(path):
+    img = pygame.image.load(BASE_IMG_PATH + path).convert_alpha()
+    return img
+
+
+def load_transparent_images(path):
+    images = []
+    for img_name in os.listdir(BASE_IMG_PATH + path):
+        images.append(load_transparent_image(path + '/' + img_name))
+    return images
+
+
 def load_images(path):
     images = []
     for img_name in os.listdir(BASE_IMG_PATH + path):

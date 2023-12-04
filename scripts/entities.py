@@ -175,17 +175,17 @@ class LightEntity(PhysicsEntity):
         super().update(tilemap, movement=movement)
 
         if movement[0] != 0:
-            self.set_action('run/side')
+            self.set_action('walk/side')
         elif movement[1] < 0:
-            self.set_action('run/back')
+            self.set_action('walk/back')
         elif movement[1] > 0:
-            self.set_action('run/front')
+            self.set_action('walk/front')
         else:
-            if self.action == 'run/back':
+            if self.action == 'walk/back':
                 self.set_action('idle/back')
-            elif self.action == 'run/front':
+            elif self.action == 'walk/front':
                 self.set_action('idle/front')
-            elif self.action == 'run/side':
+            elif self.action == 'walk/side':
                 self.set_action('idle/side')
 
 class Player(PhysicsEntity):

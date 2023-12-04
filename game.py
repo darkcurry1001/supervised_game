@@ -1,7 +1,7 @@
 import sys
 import pygame
 from scripts.entities import Player, Enemy, LightEntity
-from scripts.utils import load_image
+from scripts.utils import load_image, load_transparent_images
 from scripts.utils import load_images
 from scripts.utils import Animation
 from scripts.tilemap import Tilemap
@@ -45,12 +45,12 @@ class Game:
             'player/run/front': Animation(load_images('entities/player/run/front'), img_dur=5),
             'player/run/back': Animation(load_images('entities/player/run/back'), img_dur=5),
 
-            'light/idle/side': Animation(load_images('entities/light/idle/side'), img_dur=6),
-            'light/idle/front': Animation(load_images('entities/light/idle/front'), img_dur=6),
-            'light/idle/back': Animation(load_images('entities/light/idle/back'), img_dur=6),
-            'light/run/side': Animation(load_images('entities/light/run/side'), img_dur=5),
-            'light/run/front': Animation(load_images('entities/light/run/front'), img_dur=5),
-            'light/run/back': Animation(load_images('entities/light/run/back'), img_dur=5),
+            'light/idle/side': Animation(load_transparent_images('entities/light/idle/side'), img_dur=6),
+            'light/idle/front': Animation(load_transparent_images('entities/light/idle/front'), img_dur=6),
+            'light/idle/back': Animation(load_transparent_images('entities/light/idle/back'), img_dur=6),
+            'light/walk/side': Animation(load_transparent_images('entities/light/walk/side'), img_dur=5),
+            'light/walk/front': Animation(load_transparent_images('entities/light/walk/front'), img_dur=5),
+            'light/walk/back': Animation(load_transparent_images('entities/light/walk/back'), img_dur=5),
 
         }
 
