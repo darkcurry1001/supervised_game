@@ -1,3 +1,4 @@
+import random
 import pygame
 
 
@@ -23,7 +24,6 @@ class PhysicsEntity:
         if action != self.action:
             self.action = action
             self.animation = self.game.assets[self.type + '/' + self.action].copy()
-            print(self.action)
 
     def update(self, tilemap, movement=(0, 0)):
         # reset collision info
@@ -83,6 +83,42 @@ class PhysicsEntity:
 
     def render(self, surf, offset=(0, 0)):
         surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[0]))
+
+
+class Enemy(PhysicsEntity):
+    def __init__(self, game, pos, size):
+        super().__init__(game, 'player', pos, size)    # rename to enemy!
+
+        self.walking_horizontal = 0
+        self.walking_vertical = 0
+        self.rng = 0
+
+    def update(self, tilemap, movement=(0, 0)):
+        self.rng = random.random()
+
+        if self.walking_horizontal:
+            if tilemap.solid_check((self.rect().centerx + (-7 if self.flip else 7), self.pos[1])):
+                movement = (movement[0] - 0.5 if self.flip else 0.5, movement[1])
+            else:
+                self.flip = not self.flip
+            self.walking_horizontal = max(0, self.walking_horizontal - 1)
+        elif random.random() < 0.01:              # 1% chance to change direction -> once every 100 frames (1.6 seconds)
+            self.walking_horizontal = random.randint(1, 2) * 30    # walk for 0.5 to 1 seconds
+            if self.rng < 0.5:
+                self.flip = not self.flip
+
+        if self.walking_vertical:
+            if tilemap.solid_check((self.rect().centerx, self.pos[1] + (-7 if movement[1] > 0 else 7))):
+                movement = (movement[0], movement[1] - 0.5 if self.flip else 0.5)
+            else:
+                movement = (movement[0], -movement[1])
+            self.walking_vertical = max(0, self.walking_vertical - 1)
+        elif random.random() < 0.01:
+            self.walking_vertical = random.randint(1, 2) * 30
+
+        super().update(tilemap, movement=movement)
+
+
 
 
 class Player(PhysicsEntity):

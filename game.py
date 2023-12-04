@@ -1,6 +1,6 @@
 import sys
 import pygame
-from scripts.entities import Player
+from scripts.entities import Player, Enemy
 from scripts.utils import load_image
 from scripts.utils import load_images
 from scripts.utils import Animation
@@ -56,6 +56,13 @@ class Game:
         self.tilemap = Tilemap(self)
         self.tilemap.load('map.json')
 
+        self.enemies = []
+        for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1)]):
+            if spawner['variant'] == 0:
+                self.player.pos = spawner['pos']
+            else:
+                self.enemies.append(Enemy(self, spawner['pos'], (8, 15)))    # might have to change size
+            
         # camera position
         self.cam = [0, 0]
 
@@ -74,8 +81,11 @@ class Game:
 
             self.player.update(self.tilemap, (self.movement[1] - self.movement[0], self.movement[2] - self.movement[3]))
 
-            # render order: tiles behind player, player, tiles in front of player
+            # render order: tiles behind player, enemies, player, tiles in front of player
             self.tilemap.render_back(self.display, offset=render_cam, player_pos=self.player.pos)
+            for enemy in self.enemies.copy():
+                enemy.update(self.tilemap, (0, 0))
+                enemy.render(self.display, offset=render_cam)
             self.player.render(self.display, offset=render_cam)
             self.tilemap.render_front(self.display, offset=render_cam, player_pos=self.player.pos)
 

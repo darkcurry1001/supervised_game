@@ -65,6 +65,27 @@ class Tilemap:
         self.border = []    # define border of the map
         self.border_tiles = []
 
+    # find all tiles of (type, variant) specified in id_pairs
+    def extract(self, id_pairs, keep=False):
+        matches = []
+        for tile in self.offgrid_tiles.copy():
+            if (tile['type'], tile['variant']) in id_pairs:
+                matches.append(tile.copy())
+                if not keep:
+                    self.offgrid_tiles.remove(tile)
+
+        for loc in self.tilemap:
+            tile = self.tilemap[loc]
+            if (tile['type'], tile['variant']) in id_pairs:
+                matches.append(tile.copy())
+                matches[-1]['pos'] = matches[-1]['pos'].copy()
+                matches[-1]['pos'][0] *= self.tile_size
+                matches[-1]['pos'][1] *= self.tile_size
+                if not keep:
+                    del self.tilemap[loc]
+
+        return matches
+
     # get tiles that are currently around the player (big for optimization)
     def tiles_around(self, pos):
         tiles = []
@@ -96,6 +117,14 @@ class Tilemap:
         self.tile_size = map_data['tile_size']
         self.offgrid_tiles = map_data['offgrid']
         self.border = map_data['border']
+
+    def solid_check(self, pos):
+        tile_loc = str(int(pos[0] // self.tile_size)) + ';' + str(int(pos[1] // self.tile_size))
+        if tile_loc in self.tilemap:
+            return self.tilemap[tile_loc]
+        for tile in self.offgrid_tiles:
+            if tile['pos'] == pos and tile['type'] in PHYSICS_TILES:
+                return tile
 
     # define which of the surrounding tiles have physics enabled
     def physics_rects_around(self, pos):
