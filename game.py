@@ -1,6 +1,6 @@
 import sys
 import pygame
-from scripts.entities import Player, Enemy
+from scripts.entities import Player, Enemy, LightEntity
 from scripts.utils import load_image
 from scripts.utils import load_images
 from scripts.utils import Animation
@@ -44,6 +44,14 @@ class Game:
             'player/run/side': Animation(load_images('entities/player/run/side'), img_dur=5),
             'player/run/front': Animation(load_images('entities/player/run/front'), img_dur=5),
             'player/run/back': Animation(load_images('entities/player/run/back'), img_dur=5),
+
+            'light/idle/side': Animation(load_images('entities/light/idle/side'), img_dur=6),
+            'light/idle/front': Animation(load_images('entities/light/idle/front'), img_dur=6),
+            'light/idle/back': Animation(load_images('entities/light/idle/back'), img_dur=6),
+            'light/run/side': Animation(load_images('entities/light/run/side'), img_dur=5),
+            'light/run/front': Animation(load_images('entities/light/run/front'), img_dur=5),
+            'light/run/back': Animation(load_images('entities/light/run/back'), img_dur=5),
+
         }
 
         # create clouds
@@ -60,6 +68,8 @@ class Game:
         for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1)]):
             if spawner['variant'] == 0:
                 self.player.pos = spawner['pos']
+            elif spawner['variant'] == 1:
+                self.enemies.append(LightEntity(self, spawner['pos'], (8, 15)))
             else:
                 self.enemies.append(Enemy(self, spawner['pos'], (8, 15)))    # might have to change size
 
