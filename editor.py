@@ -21,13 +21,13 @@ class Editor:
         self.clock = pygame.time.Clock()
 
         self.assets = {
-            # 'decor': load_images('tiles/decor'),
-            # 'grass': load_images('tiles/grass'),
-            # 'large_decor': load_images('tiles/large_decor'),
-            # 'stone': load_images('tiles/stone'),
-            'ground': load_images('tiles_1/ground'),
-            'objects': load_images('tiles_1/objects'),
-            'spawners': load_images('tiles_1/spawners'),
+            'decor': load_images('tiles/decor'),
+            'grass': load_images('tiles/grass'),
+            'ground_decor': load_images('tiles/ground_decor'),
+            'spawners': load_images('tiles/spawners'),
+            'stone': load_images('tiles/stone'),
+            'tree': load_images('tiles/tree'),
+            'water': load_images('tiles/water'),
         }
 
         # contains current moving direction of camera

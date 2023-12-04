@@ -23,28 +23,31 @@ class Game:
         self.movement = [False, False, False, False]
 
         self.assets = {
-            # 'decor': load_images('tiles/decor'),
-            # 'grass': load_images('tiles/grass'),
-            # 'large_decor': load_images('tiles/large_decor'),
-            # 'stone': load_images('tiles/stone'),
-            'ground': load_images('tiles_1/ground'),
-            'objects': load_images('tiles_1/objects'),
-            'spawners': load_images('tiles_1/spawners'),
-            #'player': load_image('entities/player.png'),
-            'player': load_image('entities_1/player.png'),
+            'decor': load_images('tiles/decor'),
+            'grass': load_images('tiles/grass'),
+            'ground_decor': load_images('tiles/ground_decor'),
+            'spawners': load_images('tiles/spawners'),
+            'stone': load_images('tiles/stone'),
+            'tree': load_images('tiles/tree'),
+            'water': load_images('tiles/water'),
+            'player': load_image('entities/player.png'),
             'background': load_image('background.png'),
-            'clouds': load_images('clouds'),
+            #'clouds': load_images('clouds'),
             #'player/idle': Animation(load_images('entities/player/idle'), img_dur=6),
             #'player/run': Animation(load_images('entities/player/run'), img_dur=5),
             #'player/jump': Animation(load_images('entities/player/jump')),
             #'player/slide': Animation(load_images('entities/player/slide')),
             #'player/wall_slide': Animation(load_images('entities/player/wall_slide')),
-            'player/idle/side': Animation(load_images('entities_1/player/idle/side'), img_dur=6),
-            'player/run/side': Animation(load_images('entities_1/player/run/side'), img_dur=5),
+            'player/idle/side': Animation(load_images('entities/player/idle/side'), img_dur=6),
+            'player/idle/front': Animation(load_images('entities/player/idle/front'), img_dur=6),
+            'player/idle/back': Animation(load_images('entities/player/idle/back'), img_dur=6),
+            'player/run/side': Animation(load_images('entities/player/run/side'), img_dur=5),
+            'player/run/front': Animation(load_images('entities/player/run/front'), img_dur=5),
+            'player/run/back': Animation(load_images('entities/player/run/back'), img_dur=5),
         }
 
         # create clouds
-        self.clouds = Clouds(self.assets['clouds'], count=16)
+        # self.clouds = Clouds(self.assets['clouds'], count=16)
 
         # create player
         self.player = Player(self, (50, 50), (8, 15))
@@ -66,8 +69,8 @@ class Game:
             self.cam[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.cam[1]) / 10
             render_cam = (int(self.cam[0]), int(self.cam[1]))
 
-            self.clouds.update()
-            self.clouds.render(self.display, offset=render_cam)
+            # self.clouds.update()
+            # self.clouds.render(self.display, offset=render_cam)
 
             self.player.update(self.tilemap, (self.movement[1] - self.movement[0], self.movement[2] - self.movement[3]))
 

@@ -16,14 +16,42 @@ AUTOTILE_MAP = {
 }
 
 NEIGHBOR_OFFSETS = [(-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 0), (-1, 1), (0, 1), (1, 1)]
-PHYSICS_TILES = {}      # {'grass', 'stone'}  # set as we don't put keys (set is more efficient for lookup than list)
+PHYSICS_TILES = {'stone'}      # {'grass', 'stone'}  # set as we don't put keys (set is more efficient for lookup than list)
 AUTOTILE_TYPES = {}     # {'grass', 'stone'} # types of tiles that should be autotiled
-FRONT_BACK_OFFSET = {'objects': {0: 24,
-                                 1: 68,
-                                 },
-                     'spawners': {0: 8,
-                                  1: 8,
-                                  },
+FRONT_BACK_OFFSET = {'decor':  {0: 24,
+                                1: 68,
+                                },
+                     'spawners':   {0: 8,
+                                    1: 8,
+                                    },
+                     'stone':  {0: -8,
+                                1: -8,
+                                },
+                     'ground_decor': {
+                        0: -8,
+                        1: -8,
+                        2: -8,
+                        3: -8,
+                        4: -8,
+                        5: -8,
+                        6: -8,
+                        7: -8,
+                        8: -8,
+                        9: -8,
+                        10: -8,
+                        11: -8,
+                     },
+                     'tree': {
+                         0: 68,
+                         1: 68,
+                         2: 68,
+                         3: 68,
+                         4: 68,
+                         5: 68,
+                         6: 68,
+                         7: 68,
+                     }
+
                     }  # offsets for rendering front and back objects (has to be set manually)
 
 
@@ -43,11 +71,15 @@ class Tilemap:
         tile_loc = (int(pos[0] // self.tile_size), int(pos[1] // self.tile_size))
         for offset in NEIGHBOR_OFFSETS:
             check_loc_int = [tile_loc[0] + offset[0],tile_loc[1] + offset[1]]
+            check_loc_int_offgrid = [check_loc_int[0]*self.tile_size, check_loc_int[1]*self.tile_size]
             check_loc_str = str(tile_loc[0] + offset[0]) + ';' + str(tile_loc[1] + offset[1])
             if check_loc_str in self.tilemap:
                 tiles.append(self.tilemap[check_loc_str])
+            if check_loc_int_offgrid in self.offgrid_tiles:
+                tiles.append({'type': 'offgrid placeholder', 'pos': check_loc_int})
             if check_loc_int in self.border:
                 tiles.append({'type': 'border element place holder', 'pos': check_loc_int})
+        print(tiles)
         return tiles
 
     # save the tilemap to json
@@ -97,7 +129,7 @@ class Tilemap:
     # place tile TBA on the border only for debugging for now
     def show_border(self):
         for loc in self.border:
-            self.border_tiles.append({'type': 'ground', 'variant': 0, 'pos': loc})
+            self.border_tiles.append({'type': 'grass', 'variant': 0, 'pos': loc})
         print(self.border)
 
     # render tilemap and offgrid tiles, the order sets what is in front and what in the back, offset used for cam
