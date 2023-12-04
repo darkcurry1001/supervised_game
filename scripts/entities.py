@@ -1,4 +1,6 @@
 import random
+import sys
+
 import pygame
 
 
@@ -118,7 +120,25 @@ class Enemy(PhysicsEntity):
 
         super().update(tilemap, movement=movement)
 
+        if movement[0] != 0:
+            self.set_action('run/side')
+        elif movement[1] < 0:
+            self.set_action('run/back')
+        elif movement[1] > 0:
+            self.set_action('run/front')
+        else:
+            if self.action == 'run/back':
+                self.set_action('idle/back')
+            elif self.action == 'run/front':
+                self.set_action('idle/front')
+            elif self.action == 'run/side':
+                self.set_action('idle/side')
 
+        if self.rect().colliderect(self.game.player.rect()):
+            self.game.player.kill()
+
+    def render(self, surf, offset=(0, 0)):
+        super().render(surf, offset=offset)
 
 
 class Player(PhysicsEntity):
@@ -143,6 +163,32 @@ class Player(PhysicsEntity):
             elif self.action == 'run/side':
                 self.set_action('idle/side')
 
+    def render_flash(self, flash_img, surf, offset=(0, 0)):
+        flash_pos = (0, 0)
+        if self.action == 'run/side':
+            if self.flip:
+                flash_pos = (self.pos[0] - offset[0] - 20, self.pos[1] - offset[1])
+                surf.blit(flash_img, flash_pos)
+            else:
+                flash_pos = (self.pos[0] - offset[0] + 10, self.pos[1] - offset[1])
+                surf.blit(flash_img, flash_pos)
+        elif self.action == 'idle/side':
+            if self.flip:
+                flash_pos = (self.pos[0] - offset[0] - 18, self.pos[1] - offset[1])
+                surf.blit(flash_img, flash_pos)
+            else:
+                flash_pos = (self.pos[0] - offset[0] + 10, self.pos[1] - offset[1])
+                surf.blit(flash_img, flash_pos)
+        elif self.action == 'run/back' or self.action == 'idle/back':
+            flash_pos = (self.pos[0] - offset[0] - 4, self.pos[1] - offset[1] - 16)
+            surf.blit(flash_img, flash_pos)
+        elif self.action == 'run/front' or self.action == 'idle/front':
+            flash_pos = (self.pos[0] - offset[0] - 4, self.pos[1] - offset[1] + 16)
+            surf.blit(flash_img, flash_pos)
+        return flash_pos
+
+    def kill(self):
+        pass
 
         '''
         self.air_time += 1

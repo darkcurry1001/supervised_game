@@ -62,6 +62,9 @@ class Game:
                 self.player.pos = spawner['pos']
             else:
                 self.enemies.append(Enemy(self, spawner['pos'], (8, 15)))    # might have to change size
+
+        self.flash = False
+        self.pictures_taken = 0
             
         # camera position
         self.cam = [0, 0]
@@ -81,12 +84,20 @@ class Game:
 
             self.player.update(self.tilemap, (self.movement[1] - self.movement[0], self.movement[2] - self.movement[3]))
 
-            # render order: tiles behind player, enemies, player, tiles in front of player
+            # render order: tiles behind player, enemies, player, flash, tiles in front of player
             self.tilemap.render_back(self.display, offset=render_cam, player_pos=self.player.pos)
             for enemy in self.enemies.copy():
                 enemy.update(self.tilemap, (0, 0))
                 enemy.render(self.display, offset=render_cam)
             self.player.render(self.display, offset=render_cam)
+            if self.flash:
+                flash_position = self.player.render_flash(self.assets['water'][4], self.display, offset=render_cam)
+                for enemy in self.enemies:
+                    pygame.draw.rect(self.display, (255, 0, 0), enemy.rect(), 1)
+                    if enemy.rect().collidepoint(flash_position):
+                        self.pictures_taken += 1
+                        self.enemies.remove(enemy)
+                        print(self.pictures_taken)
             self.tilemap.render_front(self.display, offset=render_cam, player_pos=self.player.pos)
 
             #self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
@@ -113,7 +124,7 @@ class Game:
                     if event.key == pygame.K_w:
                         self.movement[3] = True
                     if event.key == pygame.K_SPACE:
-                        pass
+                        self.flash = True
 
                 # key release
                 if event.type == pygame.KEYUP:
@@ -129,6 +140,8 @@ class Game:
                         self.movement[2] = False
                     if event.key == pygame.K_w:
                         self.movement[3] = False
+                    if event.key == pygame.K_SPACE:
+                        self.flash = False
 
             # scale and project the screen to the full display
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0))
