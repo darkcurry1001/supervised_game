@@ -23,6 +23,7 @@ class PhysicsEntity:
         if action != self.action:
             self.action = action
             self.animation = self.game.assets[self.type + '/' + self.action].copy()
+            print(self.action)
 
     def update(self, tilemap, movement=(0, 0)):
         # reset collision info
@@ -94,12 +95,17 @@ class Player(PhysicsEntity):
 
         if movement[0] != 0:
             self.set_action('run/side')
-            # self.set_action('run_horizontal')
-        elif movement[1] != 0:
-            self.set_action('run/side')
-            # self.set_action('run_vertical')
+        elif movement[1] < 0:
+            self.set_action('run/back')
+        elif movement[1] > 0:
+            self.set_action('run/front')
         else:
-            self.set_action('idle/side')
+            if self.action == 'run/back':
+                self.set_action('idle/back')
+            elif self.action == 'run/front':
+                self.set_action('idle/front')
+            elif self.action == 'run/side':
+                self.set_action('idle/side')
 
 
         '''
