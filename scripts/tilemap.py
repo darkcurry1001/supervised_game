@@ -16,7 +16,7 @@ AUTOTILE_MAP = {
 }
 
 NEIGHBOR_OFFSETS = [(-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 0), (-1, 1), (0, 1), (1, 1)]
-PHYSICS_TILES = {'stone'}      # {'grass', 'stone'}  # set as we don't put keys (set is more efficient for lookup than list)
+PHYSICS_TILES = {'stone': (16, 4, 0), 'decor': (16, 8, 24)}      # (width, height, vertical_offset) # set as we don't put keys (set is more efficient for lookup than list)
 AUTOTILE_TYPES = {}     # {'grass', 'stone'} # types of tiles that should be autotiled
 FRONT_BACK_OFFSET = {'decor':  {0: 24,
                                 1: 68,
@@ -75,11 +75,11 @@ class Tilemap:
             check_loc_str = str(tile_loc[0] + offset[0]) + ';' + str(tile_loc[1] + offset[1])
             if check_loc_str in self.tilemap:
                 tiles.append(self.tilemap[check_loc_str])
-            if check_loc_int_offgrid in self.offgrid_tiles:
-                tiles.append({'type': 'offgrid placeholder', 'pos': check_loc_int})
+            for tile in self.offgrid_tiles:
+                if tile['pos'] == check_loc_int_offgrid:
+                    tiles.append({'type': tile['type'], 'pos': check_loc_int})
             if check_loc_int in self.border:
                 tiles.append({'type': 'border element place holder', 'pos': check_loc_int})
-        print(tiles)
         return tiles
 
     # save the tilemap to json
@@ -102,7 +102,7 @@ class Tilemap:
         rects = []
         for tile in self.tiles_around(pos):
             if tile['type'] in PHYSICS_TILES:
-                rects.append(pygame.Rect(tile['pos'][0] * self.tile_size, tile['pos'][1] * self.tile_size, self.tile_size, self.tile_size))
+                rects.append(pygame.Rect(tile['pos'][0] * self.tile_size, tile['pos'][1] * self.tile_size + PHYSICS_TILES[tile['type']][2], PHYSICS_TILES[tile['type']][0], PHYSICS_TILES[tile['type']][1]))
             if tile['pos'] in self.border:
                 rects.append(pygame.Rect(tile['pos'][0] * self.tile_size, tile['pos'][1] * self.tile_size, self.tile_size, self.tile_size))
         return rects
