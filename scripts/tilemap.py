@@ -15,6 +15,7 @@ AUTOTILE_MAP = {
     tuple(sorted([(1, 0), (-1, 0), (0, 1), (0, -1)])): 8,
 }
 
+PROGRESSBAR_POS = (0, 0)    # position of progressbar
 NEIGHBOR_OFFSETS = [(-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 0), (-1, 1), (0, 1), (1, 1)]
 PHYSICS_TILES = {'stone': (16, 4, 0), 'decor': (16, 8, 24)}      # (width, height, vertical_offset) # set as we don't put keys (set is more efficient for lookup than list)
 AUTOTILE_TYPES = {}     # {'grass', 'stone'} # types of tiles that should be autotiled
@@ -160,6 +161,23 @@ class Tilemap:
         for loc in self.border:
             self.border_tiles.append({'type': 'grass', 'variant': 0, 'pos': loc})
         print(self.border)
+
+    def render_progress_bar(self, surf, progress):
+        black = (0, 0, 0)
+        white = (255, 255, 255)
+        green = (0, 255, 0)
+        red = (255, 0, 0)
+        bar_width = 50
+        bar_height = 10
+        border_width = 1
+
+        pygame.draw.rect(surf, black, (PROGRESSBAR_POS[0], PROGRESSBAR_POS[1], bar_width, bar_height))
+        # Calculate width of progress bar based on percentage
+        progress_width = int(bar_width * progress)
+        pygame.draw.rect(surf, green, (PROGRESSBAR_POS[0], PROGRESSBAR_POS[1], progress_width, bar_height))
+
+        # Draw border for the progress bar
+        pygame.draw.rect(surf, black, (PROGRESSBAR_POS[0], PROGRESSBAR_POS[1], bar_width, bar_height), border_width)
 
     # render tilemap and offgrid tiles, the order sets what is in front and what in the back, offset used for cam
     # render all for editor

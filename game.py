@@ -72,6 +72,7 @@ class Game:
                 self.enemies.append(LightEntity(self, spawner['pos'], (8, 15)))
             else:
                 self.enemies.append(Enemy(self, spawner['pos'], (8, 15)))    # might have to change size
+        self.nr_enemies = len(self.enemies)
 
         self.flash = False
         self.pictures_taken = 0
@@ -96,19 +97,24 @@ class Game:
 
             # render order: tiles behind player, enemies, player, flash, tiles in front of player
             self.tilemap.render_back(self.display, offset=render_cam, player_pos=self.player.pos)
+
             for enemy in self.enemies.copy():
                 enemy.update(self.tilemap, (0, 0))
                 enemy.render(self.display, offset=render_cam)
+
             self.player.render(self.display, offset=render_cam)
+
             if self.flash:
-                flash_position = self.player.render_flash(self.assets['water'][4], self.display, offset=render_cam)
+                flash_rect = self.player.render_flash(self.assets['water'][4], self.display, offset=render_cam)
                 for enemy in self.enemies:
-                    pygame.draw.rect(self.display, (255, 0, 0), enemy.rect(), 1)
-                    if enemy.rect().collidepoint(flash_position):
+                    #pygame.draw.rect(self.display, (255, 0, 0), enemy.rect_offset(offset=render_cam), 1) # debug purpose only, delete later
+                    if enemy.rect_offset(offset=render_cam).colliderect(flash_rect):
                         self.pictures_taken += 1
                         self.enemies.remove(enemy)
                         print(self.pictures_taken)
+
             self.tilemap.render_front(self.display, offset=render_cam, player_pos=self.player.pos)
+            self.tilemap.render_progress_bar(self.display, progress=self.pictures_taken/self.nr_enemies)
 
             #self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
             #self.player.update(self.tilemap, (self.movement[1] - self.movement[0], self.movement[2] - self.movement[3]))

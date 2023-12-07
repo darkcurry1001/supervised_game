@@ -22,6 +22,9 @@ class PhysicsEntity:
     def rect(self):
         return pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
 
+    def rect_offset(self, offset=(0, 0)):
+        return pygame.Rect(self.pos[0] - offset[0], self.pos[1] - offset[1], self.size[0], self.size[1])
+
     def set_action(self, action):
         if action != self.action:
             self.action = action
@@ -84,12 +87,13 @@ class PhysicsEntity:
         self.animation.update()
 
     def render(self, surf, offset=(0, 0)):
-        surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False), (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[0]))
+        surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False),
+                  (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[0]))
 
 
 class Enemy(PhysicsEntity):
     def __init__(self, game, pos, size):
-        super().__init__(game, 'player', pos, size)    # rename to enemy!
+        super().__init__(game, 'player', pos, size)  # rename to enemy!
 
         self.walking_horizontal = 0
         self.walking_vertical = 0
@@ -104,8 +108,8 @@ class Enemy(PhysicsEntity):
             else:
                 self.flip = not self.flip
             self.walking_horizontal = max(0, self.walking_horizontal - 1)
-        elif random.random() < 0.01:              # 1% chance to change direction -> once every 100 frames (1.6 seconds)
-            self.walking_horizontal = random.randint(1, 2) * 30    # walk for 0.5 to 1 seconds
+        elif random.random() < 0.01:  # 1% chance to change direction -> once every 100 frames (1.6 seconds)
+            self.walking_horizontal = random.randint(1, 2) * 30  # walk for 0.5 to 1 seconds
             if self.rng < 0.5:
                 self.flip = not self.flip
 
@@ -188,6 +192,7 @@ class LightEntity(PhysicsEntity):
             elif self.action == 'walk/side':
                 self.set_action('idle/side')
 
+
 class Player(PhysicsEntity):
     def __init__(self, game, pos, size):
         super().__init__(game, 'player', pos, size)
@@ -232,7 +237,7 @@ class Player(PhysicsEntity):
         elif self.action == 'run/front' or self.action == 'idle/front':
             flash_pos = (self.pos[0] - offset[0] - 4, self.pos[1] - offset[1] + 16)
             surf.blit(flash_img, flash_pos)
-        return flash_pos
+        return pygame.Rect(flash_pos[0], flash_pos[1], 16, 16)   # adjust size of flash rect!!!
 
     def kill(self):
         pass
@@ -249,4 +254,3 @@ class Player(PhysicsEntity):
         else:
             self.set_action('idle')
         '''
-
