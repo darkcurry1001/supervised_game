@@ -90,6 +90,9 @@ class PhysicsEntity:
         surf.blit(pygame.transform.flip(self.animation.img(), self.flip, False),
                   (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[0]))
 
+    def render_order(self, offset=(0, 0)):
+        return {'type': 'override with type', 'pos_adj': (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[0])}
+
 
 class Enemy(PhysicsEntity):
     def __init__(self, game, pos, size):
@@ -144,6 +147,9 @@ class Enemy(PhysicsEntity):
     def render(self, surf, offset=(0, 0)):
         super().render(surf, offset=offset)
 
+    def render_order(self, offset=(0, 0)):
+        return {'type': 'enemy', 'pos_adj': (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[0])}
+
 
 class LightEntity(PhysicsEntity):
     def __init__(self, game, pos, size):
@@ -192,6 +198,9 @@ class LightEntity(PhysicsEntity):
             elif self.action == 'walk/side':
                 self.set_action('idle/side')
 
+    def render_order(self, offset=(0, 0)):
+        return {'type': 'light_entity', 'pos_adj': (self.pos[0] - offset[0], self.pos[1] - offset[1]), 'pos': (self.pos[0], self.pos[1])}
+
 
 class Player(PhysicsEntity):
     def __init__(self, game, pos, size):
@@ -215,29 +224,35 @@ class Player(PhysicsEntity):
             elif self.action == 'run/side':
                 self.set_action('idle/side')
 
-    def render_flash(self, flash_img, surf, offset=(0, 0)):
+    def render_flash(self, flash_img, flash_pos, surf):
+        surf.blit(flash_img, flash_pos)
+
+    def flash_pos(self, offset=(0, 0)):
         flash_pos = (0, 0)
         if self.action == 'run/side':
             if self.flip:
                 flash_pos = (self.pos[0] - offset[0] - 20, self.pos[1] - offset[1])
-                surf.blit(flash_img, flash_pos)
             else:
                 flash_pos = (self.pos[0] - offset[0] + 10, self.pos[1] - offset[1])
-                surf.blit(flash_img, flash_pos)
         elif self.action == 'idle/side':
             if self.flip:
                 flash_pos = (self.pos[0] - offset[0] - 18, self.pos[1] - offset[1])
-                surf.blit(flash_img, flash_pos)
             else:
                 flash_pos = (self.pos[0] - offset[0] + 10, self.pos[1] - offset[1])
-                surf.blit(flash_img, flash_pos)
         elif self.action == 'run/back' or self.action == 'idle/back':
             flash_pos = (self.pos[0] - offset[0] - 4, self.pos[1] - offset[1] - 16)
-            surf.blit(flash_img, flash_pos)
         elif self.action == 'run/front' or self.action == 'idle/front':
             flash_pos = (self.pos[0] - offset[0] - 4, self.pos[1] - offset[1] + 16)
-            surf.blit(flash_img, flash_pos)
-        return pygame.Rect(flash_pos[0], flash_pos[1], 16, 16)   # adjust size of flash rect!!!
+        return pygame.Rect(flash_pos[0], flash_pos[1], 16, 16)  # adjust size of flash rect!!!
+
+    def flash_rect(self, flash_pos):
+        return pygame.Rect(flash_pos[0], flash_pos[1], 16, 16)  # adjust size of flash rect!!!
+
+    def render_order_flash(self, offset=(0, 0)):
+        return {'type': 'flash', 'pos_adj': (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[0])}
+
+    def render_order(self, offset=(0, 0)):
+        return {'type': 'player', 'pos_adj': (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[0])}
 
     def kill(self):
         pass

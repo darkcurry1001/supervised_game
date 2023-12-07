@@ -1,4 +1,6 @@
 import sys
+import time
+
 import pygame
 from scripts.entities import Player, Enemy, LightEntity
 from scripts.utils import load_image, load_transparent_images
@@ -62,20 +64,27 @@ class Game:
 
         # create tilemap
         self.tilemap = Tilemap(self)
-        self.tilemap.load('map.json')
+        self.tilemap.load('map-big.json')
 
+        # create player, enemies and light entities from spawners (and cont of enemies)
         self.enemies = []
+        self.light_entities = []
         for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1)]):
             if spawner['variant'] == 0:
                 self.player.pos = spawner['pos']
             elif spawner['variant'] == 1:
-                self.enemies.append(LightEntity(self, spawner['pos'], (8, 15)))
+                self.light_entities.append(LightEntity(self, spawner['pos'], (8, 15)))
+                self.enemies.append(Enemy(self, spawner['pos'], (8, 15)))    # debuggin only, remove later!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             else:
                 self.enemies.append(Enemy(self, spawner['pos'], (8, 15)))    # might have to change size
         self.nr_enemies = len(self.enemies)
 
+        # variables for flash
         self.flash = False
         self.pictures_taken = 0
+
+        # list to store render elements
+        self.render_list = []
             
         # camera position
         self.cam = [0, 0]
@@ -98,23 +107,59 @@ class Game:
             # render order: tiles behind player, enemies, player, flash, tiles in front of player
             self.tilemap.render_back(self.display, offset=render_cam, player_pos=self.player.pos)
 
+            # list of objects to render
+            self.render_list = self.tilemap.render_order_offgrid(self.display, offset=render_cam)
+
+            self.render_list.append(self.player.render_order(offset=render_cam))
+
             for enemy in self.enemies.copy():
                 enemy.update(self.tilemap, (0, 0))
-                enemy.render(self.display, offset=render_cam)
+                self.render_list.append(enemy.render_order())
 
-            self.player.render(self.display, offset=render_cam)
+            for light_entity in self.light_entities.copy():
+                light_entity.update(self.tilemap, (0, 0))
+                self.render_list.append(light_entity.render_order(offset=render_cam))
 
             if self.flash:
-                flash_rect = self.player.render_flash(self.assets['water'][4], self.display, offset=render_cam)
+                flash_pos = self.player.flash_pos(offset=render_cam)
+                flash_rect = self.player.flash_rect(flash_pos)
+                self.render_list.append(self.player.render_order_flash(offset=render_cam))
                 for enemy in self.enemies:
-                    #pygame.draw.rect(self.display, (255, 0, 0), enemy.rect_offset(offset=render_cam), 1) # debug purpose only, delete later
+                    pygame.draw.rect(self.display, (255, 0, 0), enemy.rect_offset(offset=render_cam), 1) # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     if enemy.rect_offset(offset=render_cam).colliderect(flash_rect):
                         self.pictures_taken += 1
                         self.enemies.remove(enemy)
                         print(self.pictures_taken)
 
-            self.tilemap.render_front(self.display, offset=render_cam, player_pos=self.player.pos)
-            self.tilemap.render_progress_bar(self.display, progress=self.pictures_taken/self.nr_enemies)
+            # sort render list by y position
+            self.render_list.sort(key=lambda x: x['pos_adj'][1])
+
+            # render objects in render list
+            for render_object in self.render_list:
+                if render_object['type'] == 'player':
+                    self.player.render(self.display, offset=render_cam)
+
+                elif render_object['type'] == 'enemy':
+                    for enemy in self.enemies:
+                        if enemy.pos == render_object['pos_adj']:
+                            enemy.render(self.display, offset=render_cam)
+
+                elif render_object['type'] == 'light_entity':
+                    for light_entity in self.light_entities:
+                        if light_entity.pos == list(render_object['pos']):
+                            light_entity.render(self.display, offset=render_cam)
+
+                elif render_object['type'] == 'flash':
+                    self.player.render_flash(self.assets['water'][4], flash_pos, self.display)
+
+                else:
+                    self.tilemap.render_object(self.display, render_object['type'], render_object['variant'], render_object['pos'], offset=render_cam)
+
+            # render progress bar last (overlay)
+            try:
+                self.tilemap.render_progress_bar(self.display, progress=self.pictures_taken/self.nr_enemies)
+            except ZeroDivisionError:
+                self.tilemap.render_progress_bar(self.display, progress=0)
 
             #self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
             #self.player.update(self.tilemap, (self.movement[1] - self.movement[0], self.movement[2] - self.movement[3]))

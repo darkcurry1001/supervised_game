@@ -43,7 +43,7 @@ FRONT_BACK_OFFSET = {'decor':  {0: 24,
                         11: -8,
                      },
                      'tree': {
-                         0: 68,
+                         0: 63,
                          1: 68,
                          2: 68,
                          3: 68,
@@ -212,42 +212,25 @@ class Tilemap:
                     surf.blit(self.game.assets[tile['type']][tile['variant']],
                               (tile['pos'][0] * self.tile_size - offset[0], tile['pos'][1] * self.tile_size - offset[1]))
 
-        for tile in self.offgrid_tiles:
-            if tile['pos'][1] <= player_pos[1] - FRONT_BACK_OFFSET[tile['type']][tile['variant']]:
-                surf.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0] - offset[0], tile['pos'][1] - offset[1]))
+    def render_order_offgrid(self, surf, offset=(0, 0)):
+        render_list = []
 
-        # do not display border in game
         '''
-        for tile in self.border_tiles:
-            surf.blit(self.game.assets[tile['type']][tile['variant']],
-                      (tile['pos'][0] * self.tile_size - offset[0], tile['pos'][1] * self.tile_size - offset[1]))
-        '''
-
-    # render tiles in front of player
-    def render_front(self, surf, offset=(0, 0), player_pos=(0, 0)):
-        '''
-        # only render tiles that appear on screen (improves performance)
+        #only take visible tiles
         for x in range(offset[0] // self.tile_size, (offset[0] + surf.get_width()) // self.tile_size + 1):
             for y in range(offset[1] // self.tile_size, (offset[1] + surf.get_height()) // self.tile_size + 1):
-                location = str(x) + ';' + str(y)
-                #print(y, player_pos[0] // self.tile_size)
-                if location in self.tilemap and y > (player_pos[1] // self.tile_size + 1):
-                    tile = self.tilemap[location]
-                    surf.blit(self.game.assets[tile['type']][tile['variant']],
-                              (tile['pos'][0] * self.tile_size - offset[0], tile['pos'][1] * self.tile_size - offset[1]))
-        '''
+                location_offgrid = [x * self.tile_size, y * self.tile_size]'''
 
         for tile in self.offgrid_tiles:
-            if tile['pos'][1] > player_pos[1] - FRONT_BACK_OFFSET[tile['type']][tile['variant']]:
-                #print(tile['pos'][1], player_pos[1])
-                surf.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0] - offset[0], tile['pos'][1] - offset[1]))
+            tile_copy = tile.copy()
+            tile_copy['pos_adj'] = tile_copy['pos'][0] - offset[0], tile_copy['pos'][1] - offset[1] + FRONT_BACK_OFFSET[tile_copy['type']][tile['variant']]
+            render_list.append(tile_copy)
 
-        # do not display border in game
-        '''
-        for tile in self.border_tiles:
-            surf.blit(self.game.assets[tile['type']][tile['variant']],
-                      (tile['pos'][0] * self.tile_size - offset[0], tile['pos'][1] * self.tile_size - offset[1]))
-        '''
+        return render_list
+
+    def render_object(self, surf, type, variant, pos, offset=(0, 0)):
+        surf.blit(self.game.assets[type][variant], (pos[0] - offset[0], pos[1] - offset[1]))
+
 
 
 
