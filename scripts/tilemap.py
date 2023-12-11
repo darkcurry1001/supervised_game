@@ -17,13 +17,14 @@ AUTOTILE_MAP = {
 
 PROGRESSBAR_POS = (0, 0)    # position of progressbar
 NEIGHBOR_OFFSETS = [(-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 0), (-1, 1), (0, 1), (1, 1)]
-PHYSICS_TILES = {'stone': (16, 4, 0), 'decor': (16, 8, 24)}      # (width, height, vertical_offset) # set as we don't put keys (set is more efficient for lookup than list)
+PHYSICS_TILES = {'stone': (16, 4, 0), 'decor': (16, 8, 24), }      # (width, height, vertical_offset) # set as we don't put keys (set is more efficient for lookup than list)
 AUTOTILE_TYPES = {}     # {'grass', 'stone'} # types of tiles that should be autotiled
 FRONT_BACK_OFFSET = {'decor':  {0: 24,
                                 1: 68,
                                 },
                      'spawners':   {0: 8,
                                     1: 8,
+                                    2: 8,
                                     },
                      'stone':  {0: -8,
                                 1: -8,

@@ -2,7 +2,7 @@ import sys
 import time
 from data.game_text import game_text
 import pygame
-from scripts.entities import Player, Enemy, LightEntity
+from scripts.entities import Player, Enemy, LightEntity, Npc
 from scripts.utils import load_image, load_transparent_images
 from scripts.utils import load_images
 from scripts.utils import Animation
@@ -29,15 +29,17 @@ class Game:
             'decor': load_images('tiles/decor'),
             'grass': load_images('tiles/grass'),
             'ground_decor': load_images('tiles/ground_decor'),
-            'spawners': load_images('tiles/spawners'),
             'stone': load_images('tiles/stone'),
             'tree': load_images('tiles/tree'),
             'water': load_images('tiles/water'),
-            'player': load_image('entities/player.png'),
+            'spawners': load_images('tiles/spawners'),
+
             'background': load_image('background.png'),
             'background2': load_image('background2.png'),
             'background2_dimmed': load_image('background/start/05.png'),
             "bg_dimmed": load_images("background/start"),
+
+            'player': load_image('entities/player.png'),
             #'clouds': load_images('clouds'),
             #'player/idle': Animation(load_images('entities/player/idle'), img_dur=6),
             #'player/run': Animation(load_images('entities/player/run'), img_dur=5),
@@ -50,6 +52,9 @@ class Game:
             'player/run/side': Animation(load_images('entities/player/run/side'), img_dur=5),
             'player/run/front': Animation(load_images('entities/player/run/front'), img_dur=5),
             'player/run/back': Animation(load_images('entities/player/run/back'), img_dur=5),
+            'player/slash/side': Animation(load_images('entities/player/slash/side'), img_dur=5),
+            'player/slash/front': Animation(load_images('entities/player/slash/front'), img_dur=5),
+            'player/slash/back': Animation(load_images('entities/player/slash/back'), img_dur=5),
 
             'light/idle/side': Animation(load_transparent_images('entities/light/idle/side'), img_dur=6),
             'light/idle/front': Animation(load_transparent_images('entities/light/idle/front'), img_dur=6),
@@ -57,6 +62,26 @@ class Game:
             'light/walk/side': Animation(load_transparent_images('entities/light/walk/side'), img_dur=5),
             'light/walk/front': Animation(load_transparent_images('entities/light/walk/front'), img_dur=5),
             'light/walk/back': Animation(load_transparent_images('entities/light/walk/back'), img_dur=5),
+
+            'enemy/attack/side': Animation(load_images('entities/enemy/attack/side'), img_dur=5),
+            'enemy/attack/front': Animation(load_images('entities/enemy/attack/front'), img_dur=5),
+            'enemy/attack/back': Animation(load_images('entities/enemy/attack/back'), img_dur=5),
+            'enemy/death': Animation(load_images('entities/enemy/death'), img_dur=5),
+            'enemy/idle/side': Animation(load_images('entities/enemy/idle/side'), img_dur=6),
+            'enemy/idle/front': Animation(load_images('entities/enemy/idle/front'), img_dur=6),
+            'enemy/idle/back': Animation(load_images('entities/enemy/idle/back'), img_dur=6),
+            'enemy/walk/side': Animation(load_images('entities/enemy/walk/side'), img_dur=5),
+            'enemy/walk/front': Animation(load_images('entities/enemy/walk/front'), img_dur=5),
+            'enemy/walk/back': Animation(load_images('entities/enemy/walk/back'), img_dur=5),
+
+            'npc/idle/side': Animation(load_images('entities/npc/idle/side'), img_dur=24),
+
+            'shadow-eye-glow/idle/side': Animation(load_transparent_images('entities/shadow-eye-glow/idle/side'), img_dur=6),
+            'shadow-eye-glow/idle/front': Animation(load_transparent_images('entities/shadow-eye-glow/idle/front'), img_dur=6),
+            'shadow-eye-glow/idle/back': Animation(load_transparent_images('entities/shadow-eye-glow/idle/back'), img_dur=6),
+            'shadow-eye-glow/walk/side': Animation(load_transparent_images('entities/shadow-eye-glow/walk/side'), img_dur=5),
+            'shadow-eye-glow/walk/front': Animation(load_transparent_images('entities/shadow-eye-glow/walk/front'), img_dur=5),
+            'shadow-eye-glow/walk/back': Animation(load_transparent_images('entities/shadow-eye-glow/walk/back'), img_dur=5),
 
         }
 
@@ -70,18 +95,24 @@ class Game:
         self.tilemap = Tilemap(self)
         self.tilemap.load('map-big.json')
 
-        # create player, enemies and light entities from spawners (and cont of enemies)
+        # create player, enemies, npcs and light entities from spawners (and cont of enemies)
         self.enemies = []
         self.light_entities = []
-        for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1)]):
+        self.npcs = []
+        for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1), ('spawners', 2)]):
             if spawner['variant'] == 0:
                 self.player.pos = spawner['pos']
             elif spawner['variant'] == 1:
                 self.light_entities.append(LightEntity(self, spawner['pos'], (8, 15)))
                 self.enemies.append(Enemy(self, spawner['pos'], (8, 15)))    # debuggin only, remove later!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            elif spawner['variant'] == 2:
+                self.npcs.append(Npc(self, spawner['pos'], (18, 18)))
             else:
                 self.enemies.append(Enemy(self, spawner['pos'], (8, 15)))    # might have to change size
         self.nr_enemies = len(self.enemies)
+
+        # list of rects npcs
+        self.npc_rects = [r.rect() for r in self.npcs]
 
         # variables for flash
         self.flash = False
@@ -199,6 +230,10 @@ class Game:
                 light_entity.update(self.tilemap, (0, 0))
                 self.render_list.append(light_entity.render_order(offset=render_cam))
 
+            for npc in self.npcs.copy():
+                npc.update(self.tilemap, (0, 0))
+                self.render_list.append(npc.render_order(offset=render_cam))
+
             if self.flash:
                 flash_pos = self.player.flash_pos(offset=render_cam)
                 flash_rect = self.player.flash_rect(flash_pos)
@@ -210,6 +245,11 @@ class Game:
                         self.enemies.remove(enemy)
                         print(self.pictures_taken)
 
+            for npc in self.npcs:
+                if npc.rect_offset(offset=render_cam).colliderect(self.player.rect_offset(offset=render_cam)):
+                    pygame.draw.rect(self.display, (255, 0, 0), npc.rect_offset(offset=render_cam), 1)
+                    #print('bumnped into npc')
+
             # sort render list by y position
             self.render_list.sort(key=lambda x: x['pos_adj'][1])
 
@@ -220,6 +260,7 @@ class Game:
 
                 elif render_object['type'] == 'enemy':
                     for enemy in self.enemies:
+                        #print(enemy.pos, list(render_object['pos_adj']))
                         if enemy.pos == render_object['pos_adj']:
                             enemy.render(self.display, offset=render_cam)
 
@@ -227,6 +268,11 @@ class Game:
                     for light_entity in self.light_entities:
                         if light_entity.pos == list(render_object['pos']):
                             light_entity.render(self.display, offset=render_cam)
+
+                elif render_object['type'] == 'npc':
+                    for npc in self.npcs:
+                        if npc.pos == list(render_object['pos']):
+                            npc.render(self.display, offset=render_cam)
 
                 elif render_object['type'] == 'flash':
                     self.player.render_flash(self.assets['water'][4], flash_pos, self.display)

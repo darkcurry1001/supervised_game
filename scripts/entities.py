@@ -96,7 +96,7 @@ class PhysicsEntity:
 
 class Enemy(PhysicsEntity):
     def __init__(self, game, pos, size):
-        super().__init__(game, 'player', pos, size)  # rename to enemy!
+        super().__init__(game, 'enemy', pos, size)
 
         self.walking_horizontal = 0
         self.walking_vertical = 0
@@ -128,17 +128,17 @@ class Enemy(PhysicsEntity):
         super().update(tilemap, movement=movement)
 
         if movement[0] != 0:
-            self.set_action('run/side')
+            self.set_action('walk/side')
         elif movement[1] < 0:
-            self.set_action('run/back')
+            self.set_action('walk/back')
         elif movement[1] > 0:
-            self.set_action('run/front')
+            self.set_action('walk/front')
         else:
-            if self.action == 'run/back':
+            if self.action == 'walk/back':
                 self.set_action('idle/back')
-            elif self.action == 'run/front':
+            elif self.action == 'walk/front':
                 self.set_action('idle/front')
-            elif self.action == 'run/side':
+            elif self.action == 'walk/side':
                 self.set_action('idle/side')
 
         if self.rect().colliderect(self.game.player.rect()):
@@ -257,15 +257,15 @@ class Player(PhysicsEntity):
     def kill(self):
         pass
 
-        '''
-        self.air_time += 1
-        if self.collisions['down']:
-            self.air_time = 0
 
-        if self.air_time > 4:           # has to be larger 4 for some reason
-            self.set_action('jump')
-        elif movement[0] != 0:
-            self.set_action('run')
-        else:
-            self.set_action('idle')
-        '''
+class Npc(PhysicsEntity):
+    def __init__(self, game, pos, size):
+        super().__init__(game, 'npc', pos, size)
+
+        self.set_action('idle/side')
+
+    def render_order(self, offset=(0, 0)):
+        return {'type': 'npc', 'pos_adj': (self.pos[0] - offset[0], self.pos[1] - offset[1]), 'pos': (self.pos[0], self.pos[1])}
+
+    def render(self, surf, offset=(0, 0)):
+        super().render(surf, offset=offset)
