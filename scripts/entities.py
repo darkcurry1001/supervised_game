@@ -60,11 +60,11 @@ class PhysicsEntity:
         entity_rect = self.rect()
         for rect in tilemap.physics_rects_around(self.pos):
             if entity_rect.colliderect(rect):
-                # moving right
+                # moving down
                 if frame_movement[1] > 0:
                     entity_rect.bottom = rect.top
                     self.collisions['down'] = True
-                # moving left
+                # moving up
                 if frame_movement[1] < 0:
                     entity_rect.top = rect.bottom
                     self.collisions['up'] = True
@@ -117,7 +117,7 @@ class Enemy(PhysicsEntity):
                 self.flip = not self.flip
 
         if self.walking_vertical:
-            if tilemap.solid_check((self.rect().centerx, self.pos[1] + (-7 if movement[1] > 0 else 7))):
+            if tilemap.solid_check((self.rect().centerx, self.pos[1] + (-35 if movement[1] > 0 else 0))):
                 movement = (movement[0], movement[1] - 0.5 if self.flip else 0.5)
             else:
                 movement = (movement[0], -movement[1])

@@ -89,7 +89,7 @@ class Game:
         # self.clouds = Clouds(self.assets['clouds'], count=16)
 
         # create player
-        self.player = Player(self, (50, 50), (8, 15))
+        self.player = Player(self, (50, 50), (8, 17))
 
         # create tilemap
         self.tilemap = Tilemap(self)
@@ -242,6 +242,8 @@ class Game:
                 flash_rect = self.player.flash_rect(flash_pos)
                 self.render_list.append(self.player.render_order_flash(offset=render_cam))
                 for light_entity in self.light_entities:
+                    pygame.draw.rect(self.display, (255, 0, 0), light_entity.rect_offset(offset=render_cam), 1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    pygame.draw.rect(self.display, (255, 0, 0), self.player.rect_offset(offset=render_cam),1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     if light_entity.rect_offset(offset=render_cam).colliderect(flash_rect):
                         self.pictures_taken += 1
                         self.light_entities.remove(light_entity)
