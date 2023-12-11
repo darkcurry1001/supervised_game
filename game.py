@@ -1,6 +1,6 @@
 import sys
 import time
-
+from data.game_text import game_text
 import pygame
 from scripts.entities import Player, Enemy, LightEntity
 from scripts.utils import load_image, load_transparent_images
@@ -18,6 +18,7 @@ class Game:
         pygame.display.set_caption('ninja game')
         self.screen = pygame.display.set_mode((1280, 960))
         self.display = pygame.Surface((320, 240))   # used for pixel art (render small and scale up to screen size)
+        screen = pygame.display.set_mode((1280, 960))
 
         # init game clock
         self.clock = pygame.time.Clock()
@@ -34,6 +35,9 @@ class Game:
             'water': load_images('tiles/water'),
             'player': load_image('entities/player.png'),
             'background': load_image('background.png'),
+            'background2': load_image('background2.png'),
+            'background2_dimmed': load_image('background/start/05.png'),
+            "bg_dimmed": load_images("background/start"),
             #'clouds': load_images('clouds'),
             #'player/idle': Animation(load_images('entities/player/idle'), img_dur=6),
             #'player/run': Animation(load_images('entities/player/run'), img_dur=5),
@@ -89,7 +93,82 @@ class Game:
         # camera position
         self.cam = [0, 0]
 
+        # Render the text
+        self.font = pygame.font.SysFont('Arial', 25)
+        self.display_text = game_text["intro"]
+        self.active_text = 0
+        self.messages = self.display_text[self.active_text]
+        self.snip = self.font.render('', True, (255, 255, 255))
+        self.text_counter = 0
+        self.text_speed = 3
+        self.active_message = 0
+        self.message = self.messages[self.active_message]
+        self.text_done = False
+
     def run(self):
+        self.screen.blit(self.assets["background2"], (0, 0))
+
+        # Update the display
+        pygame.display.flip()
+        timer = pygame.time.Clock()
+
+        time.sleep(1)
+
+        for image in self.assets["bg_dimmed"]:
+            self.screen.blit(image, (0,0))
+            pygame.display.flip()
+            time.sleep(0.2)
+
+        # Blit the image and text
+        self.screen.blit(self.assets["background2_dimmed"], (0, 0))
+        pygame.display.flip()
+        # Wait for an event (like a key press) to continue
+        line_counter = 0
+        line_done = False
+        waiting = True
+        while waiting:
+            timer.tick(60)
+
+            text_len = sum(map(len, self.messages))
+            if self.text_counter < self.text_speed * text_len:
+                self.text_counter += 1
+            elif self.text_counter >= self.text_speed*text_len:
+                self.text_done = True
+
+            if line_counter < self.text_speed * len(self.message):
+                line_counter += 1
+            elif line_counter >= self.text_speed*len(self.message) and not self.text_done:
+                line_counter = 0
+                self.active_message += 1
+                self.message = self.messages[self.active_message]
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    waiting = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RIGHT and self.text_done and self.active_text < len(self.display_text)-1:
+                        self.screen.blit(self.assets["background2_dimmed"], (0, 0))
+                        self.active_text += 1
+                        self.active_message = 0
+                        self.text_done = False
+                        self.messages = self.display_text[self.active_text]
+                        self.message = self.messages[self.active_message]
+                        self.text_counter = 0
+                        line_counter = 0
+                    else:
+                        waiting = False
+
+            full_text_surface = self.font.render(self.message, True, 'white')
+            full_text_rect = full_text_surface.get_rect(center=(1280 // 2, 960 // 2))
+
+            snip = self.font.render(self.message[0:line_counter // self.text_speed], True, 'white')
+            snip_rect = snip.get_rect(center=(1280 // 2, 960 // 2 + self.active_message * 50))
+
+            # Adjust snip_rect to match the full text position
+            snip_rect.left = full_text_rect.left
+            self.screen.blit(snip, snip_rect)
+            pygame.display.flip()
+
         while True:
             self.display.blit(self.assets['background'], (0, 0))    # reset screen
 
