@@ -63,16 +63,16 @@ class Game:
             'light/walk/front': Animation(load_transparent_images('entities/light/walk/front'), img_dur=5),
             'light/walk/back': Animation(load_transparent_images('entities/light/walk/back'), img_dur=5),
 
-            'enemy/attack/side': Animation(load_images('entities/enemy/attack/side'), img_dur=5),
-            'enemy/attack/front': Animation(load_images('entities/enemy/attack/front'), img_dur=5),
-            'enemy/attack/back': Animation(load_images('entities/enemy/attack/back'), img_dur=5),
-            'enemy/death': Animation(load_images('entities/enemy/death'), img_dur=5),
-            'enemy/idle/side': Animation(load_images('entities/enemy/idle/side'), img_dur=6),
-            'enemy/idle/front': Animation(load_images('entities/enemy/idle/front'), img_dur=6),
-            'enemy/idle/back': Animation(load_images('entities/enemy/idle/back'), img_dur=6),
-            'enemy/walk/side': Animation(load_images('entities/enemy/walk/side'), img_dur=5),
-            'enemy/walk/front': Animation(load_images('entities/enemy/walk/front'), img_dur=5),
-            'enemy/walk/back': Animation(load_images('entities/enemy/walk/back'), img_dur=5),
+            'enemy/attack/side': Animation(load_images('entities/enemy/attack/side', background=(0, 255, 43)), img_dur=5),
+            'enemy/attack/front': Animation(load_images('entities/enemy/attack/front', background=(0, 255, 43)), img_dur=5),
+            'enemy/attack/back': Animation(load_images('entities/enemy/attack/back', background=(0, 255, 43)), img_dur=5),
+            'enemy/death': Animation(load_images('entities/enemy/death', background=(0, 255, 43)), img_dur=5),
+            'enemy/idle/side': Animation(load_images('entities/enemy/idle/side', background=(0, 255, 43)), img_dur=6),
+            'enemy/idle/front': Animation(load_images('entities/enemy/idle/front', background=(0, 255, 43)), img_dur=6),
+            'enemy/idle/back': Animation(load_images('entities/enemy/idle/back', background=(0, 255, 43)), img_dur=6),
+            'enemy/walk/side': Animation(load_images('entities/enemy/walk/side', background=(0, 255, 43)), img_dur=5),
+            'enemy/walk/front': Animation(load_images('entities/enemy/walk/front', background=(0, 255, 43)), img_dur=5),
+            'enemy/walk/back': Animation(load_images('entities/enemy/walk/back', background=(0, 255, 43)), img_dur=5),
 
             'npc/idle/side': Animation(load_images('entities/npc/idle/side', background=(0, 255, 43)), img_dur=24),
 
@@ -105,7 +105,7 @@ class Game:
             elif spawner['variant'] == 1:
                 self.light_entities.append(LightEntity(self, spawner['pos'], (8, 15)))
             elif spawner['variant'] == 2:
-                self.npcs.append(Npc(self, spawner['pos'], (18, 18)))
+                self.npcs.append(Npc(self, spawner['pos'], (18, 12)))
             elif spawner['variant'] == 3:
                 self.enemies.append(Enemy(self, spawner['pos'], (16, 35)))
             else:                                                            # not accessed for now
@@ -226,7 +226,7 @@ class Game:
 
             for enemy in self.enemies.copy():
                 enemy.update(self.tilemap, (0, 0))
-                self.render_list.append(enemy.render_order())
+                self.render_list.append(enemy.render_order(offset=render_cam))
 
             for light_entity in self.light_entities.copy():
                 light_entity.update(self.tilemap, (0, 0))

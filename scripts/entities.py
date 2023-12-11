@@ -4,6 +4,14 @@ import sys
 import pygame
 
 
+ENTITY_OFFSETS = {
+    'player': 4,
+    'enemy': 16,
+    'npc': 4,
+    'light_entity': -9,
+}
+
+
 class PhysicsEntity:
     def __init__(self, game, e_type, pos, size):
         self.game = game
@@ -125,6 +133,7 @@ class Enemy(PhysicsEntity):
         elif random.random() < 0.01:
             self.walking_vertical = random.randint(1, 2) * 30
 
+        #movement = (0, 0)   # disable movement                                              # debug !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         super().update(tilemap, movement=movement)
 
         if movement[0] != 0:
@@ -141,14 +150,14 @@ class Enemy(PhysicsEntity):
             elif self.action == 'walk/side':
                 self.set_action('idle/side')
 
-        if self.rect().colliderect(self.game.player.rect()):
-            self.game.player.kill()
+        if self.rect_offset().colliderect(self.game.player.rect()):
+            self.game.player.kill()     # not initialized yet
 
     def render(self, surf, offset=(0, 0)):
         super().render(surf, offset=offset)
 
     def render_order(self, offset=(0, 0)):
-        return {'type': 'enemy', 'pos_adj': (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[0]), 'pos': (self.pos[0], self.pos[1])}
+        return {'type': 'enemy', 'pos_adj': (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[1] + ENTITY_OFFSETS['enemy']), 'pos': (self.pos[0], self.pos[1])}
 
 
 class LightEntity(PhysicsEntity):
@@ -182,6 +191,7 @@ class LightEntity(PhysicsEntity):
         elif random.random() < 0.01:
             self.walking_vertical = random.randint(1, 2) * 30
 
+        #movement = (0, 0)   # disable movement                                              # debug !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         super().update(tilemap, movement=movement)
 
         if movement[0] != 0:
@@ -199,7 +209,7 @@ class LightEntity(PhysicsEntity):
                 self.set_action('idle/side')
 
     def render_order(self, offset=(0, 0)):
-        return {'type': 'light_entity', 'pos_adj': (self.pos[0] - offset[0], self.pos[1] - offset[1]), 'pos': (self.pos[0], self.pos[1])}
+        return {'type': 'light_entity', 'pos_adj': (self.pos[0] - offset[0], self.pos[1] - offset[1]+ ENTITY_OFFSETS['light_entity']), 'pos': (self.pos[0], self.pos[1])}
 
 
 class Player(PhysicsEntity):
