@@ -4,9 +4,9 @@ import os
 BASE_IMG_PATH = 'data/images/'
 
 
-def load_image(path):
+def load_image(path, background=(0, 0, 0)):
     img = pygame.image.load(BASE_IMG_PATH + path).convert()
-    img.set_colorkey((0, 0, 0))
+    img.set_colorkey(background)
     return img
 
 
@@ -22,10 +22,10 @@ def load_transparent_images(path):
     return images
 
 
-def load_images(path):
+def load_images(path, background=(0, 0, 0)):
     images = []
     for img_name in os.listdir(BASE_IMG_PATH + path):
-        images.append(load_image(path + '/' + img_name))
+        images.append(load_image(path + '/' + img_name, background))
     return images
 
 

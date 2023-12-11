@@ -74,7 +74,7 @@ class Game:
             'enemy/walk/front': Animation(load_images('entities/enemy/walk/front'), img_dur=5),
             'enemy/walk/back': Animation(load_images('entities/enemy/walk/back'), img_dur=5),
 
-            'npc/idle/side': Animation(load_images('entities/npc/idle/side'), img_dur=24),
+            'npc/idle/side': Animation(load_images('entities/npc/idle/side', background=(0, 255, 43)), img_dur=24),
 
             'shadow-eye-glow/idle/side': Animation(load_transparent_images('entities/shadow-eye-glow/idle/side'), img_dur=6),
             'shadow-eye-glow/idle/front': Animation(load_transparent_images('entities/shadow-eye-glow/idle/front'), img_dur=6),
@@ -99,17 +99,19 @@ class Game:
         self.enemies = []
         self.light_entities = []
         self.npcs = []
-        for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1), ('spawners', 2)]):
+        for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1), ('spawners', 2), ('spawners', 3), ]):
             if spawner['variant'] == 0:
                 self.player.pos = spawner['pos']
             elif spawner['variant'] == 1:
                 self.light_entities.append(LightEntity(self, spawner['pos'], (8, 15)))
-                self.enemies.append(Enemy(self, spawner['pos'], (8, 15)))    # debuggin only, remove later!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             elif spawner['variant'] == 2:
                 self.npcs.append(Npc(self, spawner['pos'], (18, 18)))
-            else:
+            elif spawner['variant'] == 3:
+                self.enemies.append(Enemy(self, spawner['pos'], (16, 35)))
+            else:                                                            # not accessed for now
                 self.enemies.append(Enemy(self, spawner['pos'], (8, 15)))    # might have to change size
         self.nr_enemies = len(self.enemies)
+        self.nr_light = len(self.light_entities)
 
         # list of rects npcs
         self.npc_rects = [r.rect() for r in self.npcs]
@@ -234,6 +236,17 @@ class Game:
                 npc.update(self.tilemap, (0, 0))
                 self.render_list.append(npc.render_order(offset=render_cam))
 
+            # taking pictures and removing light entities
+            if self.flash:
+                flash_pos = self.player.flash_pos(offset=render_cam)
+                flash_rect = self.player.flash_rect(flash_pos)
+                self.render_list.append(self.player.render_order_flash(offset=render_cam))
+                for light_entity in self.light_entities:
+                    if light_entity.rect_offset(offset=render_cam).colliderect(flash_rect):
+                        self.pictures_taken += 1
+                        self.light_entities.remove(light_entity)
+                        print(self.pictures_taken)
+
             if self.flash:
                 flash_pos = self.player.flash_pos(offset=render_cam)
                 flash_rect = self.player.flash_rect(flash_pos)
@@ -241,7 +254,6 @@ class Game:
                 for enemy in self.enemies:
                     pygame.draw.rect(self.display, (255, 0, 0), enemy.rect_offset(offset=render_cam), 1) # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     if enemy.rect_offset(offset=render_cam).colliderect(flash_rect):
-                        self.pictures_taken += 1
                         self.enemies.remove(enemy)
                         print(self.pictures_taken)
 
@@ -260,8 +272,7 @@ class Game:
 
                 elif render_object['type'] == 'enemy':
                     for enemy in self.enemies:
-                        #print(enemy.pos, list(render_object['pos_adj']))
-                        if enemy.pos == render_object['pos_adj']:
+                        if enemy.pos == list(render_object['pos']):
                             enemy.render(self.display, offset=render_cam)
 
                 elif render_object['type'] == 'light_entity':
@@ -282,7 +293,7 @@ class Game:
 
             # render progress bar last (overlay)
             try:
-                self.tilemap.render_progress_bar(self.display, progress=self.pictures_taken/self.nr_enemies)
+                self.tilemap.render_progress_bar(self.display, progress=self.pictures_taken/self.nr_light)
             except ZeroDivisionError:
                 self.tilemap.render_progress_bar(self.display, progress=0)
 
