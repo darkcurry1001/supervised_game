@@ -4,6 +4,14 @@ import sys
 import pygame
 
 
+ENTITY_OFFSETS = {
+    'player': 4,
+    'enemy': 16,
+    'npc': 4,
+    'light_entity': -9,
+}
+
+
 class PhysicsEntity:
     def __init__(self, game, e_type, pos, size):
         self.game = game
@@ -60,11 +68,11 @@ class PhysicsEntity:
         entity_rect = self.rect()
         for rect in tilemap.physics_rects_around(self.pos):
             if entity_rect.colliderect(rect):
-                # moving right
+                # moving down
                 if frame_movement[1] > 0:
                     entity_rect.bottom = rect.top
                     self.collisions['down'] = True
-                # moving left
+                # moving up
                 if frame_movement[1] < 0:
                     entity_rect.top = rect.bottom
                     self.collisions['up'] = True
@@ -96,7 +104,7 @@ class PhysicsEntity:
 
 class Enemy(PhysicsEntity):
     def __init__(self, game, pos, size):
-        super().__init__(game, 'player', pos, size)  # rename to enemy!
+        super().__init__(game, 'enemy', pos, size)
 
         self.walking_horizontal = 0
         self.walking_vertical = 0
@@ -117,7 +125,7 @@ class Enemy(PhysicsEntity):
                 self.flip = not self.flip
 
         if self.walking_vertical:
-            if tilemap.solid_check((self.rect().centerx, self.pos[1] + (-7 if movement[1] > 0 else 7))):
+            if tilemap.solid_check((self.rect().centerx, self.pos[1] + (-35 if movement[1] > 0 else 0))):
                 movement = (movement[0], movement[1] - 0.5 if self.flip else 0.5)
             else:
                 movement = (movement[0], -movement[1])
@@ -125,30 +133,31 @@ class Enemy(PhysicsEntity):
         elif random.random() < 0.01:
             self.walking_vertical = random.randint(1, 2) * 30
 
+        #movement = (0, 0)   # disable movement                                              # debug !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         super().update(tilemap, movement=movement)
 
         if movement[0] != 0:
-            self.set_action('run/side')
+            self.set_action('walk/side')
         elif movement[1] < 0:
-            self.set_action('run/back')
+            self.set_action('walk/back')
         elif movement[1] > 0:
-            self.set_action('run/front')
+            self.set_action('walk/front')
         else:
-            if self.action == 'run/back':
+            if self.action == 'walk/back':
                 self.set_action('idle/back')
-            elif self.action == 'run/front':
+            elif self.action == 'walk/front':
                 self.set_action('idle/front')
-            elif self.action == 'run/side':
+            elif self.action == 'walk/side':
                 self.set_action('idle/side')
 
-        if self.rect().colliderect(self.game.player.rect()):
-            self.game.player.kill()
+        if self.rect_offset().colliderect(self.game.player.rect()):
+            self.game.player.kill()     # not initialized yet
 
     def render(self, surf, offset=(0, 0)):
         super().render(surf, offset=offset)
 
     def render_order(self, offset=(0, 0)):
-        return {'type': 'enemy', 'pos_adj': (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[0])}
+        return {'type': 'enemy', 'pos_adj': (self.pos[0] - offset[0] + self.anim_offset[0], self.pos[1] - offset[1] + self.anim_offset[1] + ENTITY_OFFSETS['enemy']), 'pos': (self.pos[0], self.pos[1])}
 
 
 class LightEntity(PhysicsEntity):
@@ -182,6 +191,7 @@ class LightEntity(PhysicsEntity):
         elif random.random() < 0.01:
             self.walking_vertical = random.randint(1, 2) * 30
 
+        #movement = (0, 0)   # disable movement                                              # debug !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         super().update(tilemap, movement=movement)
 
         if movement[0] != 0:
@@ -199,7 +209,7 @@ class LightEntity(PhysicsEntity):
                 self.set_action('idle/side')
 
     def render_order(self, offset=(0, 0)):
-        return {'type': 'light_entity', 'pos_adj': (self.pos[0] - offset[0], self.pos[1] - offset[1]), 'pos': (self.pos[0], self.pos[1])}
+        return {'type': 'light_entity', 'pos_adj': (self.pos[0] - offset[0], self.pos[1] - offset[1]+ ENTITY_OFFSETS['light_entity']), 'pos': (self.pos[0], self.pos[1])}
 
 
 class Player(PhysicsEntity):
@@ -257,15 +267,15 @@ class Player(PhysicsEntity):
     def kill(self):
         pass
 
-        '''
-        self.air_time += 1
-        if self.collisions['down']:
-            self.air_time = 0
 
-        if self.air_time > 4:           # has to be larger 4 for some reason
-            self.set_action('jump')
-        elif movement[0] != 0:
-            self.set_action('run')
-        else:
-            self.set_action('idle')
-        '''
+class Npc(PhysicsEntity):
+    def __init__(self, game, pos, size):
+        super().__init__(game, 'npc', pos, size)
+
+        self.set_action('idle/side')
+
+    def render_order(self, offset=(0, 0)):
+        return {'type': 'npc', 'pos_adj': (self.pos[0] - offset[0], self.pos[1] - offset[1]), 'pos': (self.pos[0], self.pos[1])}
+
+    def render(self, surf, offset=(0, 0)):
+        super().render(surf, offset=offset)
