@@ -1,6 +1,6 @@
 import random
 import sys
-
+import math
 import pygame
 
 
@@ -273,9 +273,29 @@ class Npc(PhysicsEntity):
         super().__init__(game, 'npc', pos, size)
 
         self.set_action('idle/side')
+        self.dialogue = False
+
+    def render_proximity_text(self, player_pos, screen, render_cam_offset):
+        distance = math.sqrt((self.pos[0] - player_pos[0]) ** 2 + (self.pos[1] - player_pos[1]) ** 2)
+        font = pygame.font.SysFont('Arial', 12)
+        if distance < 30:
+            self.dialogue = True
+            text_surface = font.render('Press E', True, (255, 255, 255))
+
+            # Translate the NPC's world position into camera-relative screen position
+            text_x = self.pos[0]*4- render_cam_offset[0]*4 + 20
+            text_y = self.pos[1]*4  - render_cam_offset[1]*4  + 50  # Adjust the offset as needed
+
+            text_rect = text_surface.get_rect(center=(text_x, text_y))
+            screen.blit(text_surface, text_rect)
+        else:
+            self.dialogue = False
 
     def render_order(self, offset=(0, 0)):
         return {'type': 'npc', 'pos_adj': (self.pos[0] - offset[0], self.pos[1] - offset[1]), 'pos': (self.pos[0], self.pos[1])}
 
     def render(self, surf, offset=(0, 0)):
         super().render(surf, offset=offset)
+
+
+

@@ -5,7 +5,7 @@ import pygame
 from scripts.entities import Player, Enemy, LightEntity, Npc
 from scripts.utils import load_image, load_transparent_images
 from scripts.utils import load_images
-from scripts.utils import Animation
+from scripts.utils import Animation, DialogueHandler, Codex
 from scripts.tilemap import Tilemap
 from scripts.clouds import Clouds
 
@@ -18,7 +18,8 @@ class Game:
         pygame.display.set_caption('ninja game')
         self.screen = pygame.display.set_mode((1280, 960))
         self.display = pygame.Surface((320, 240))   # used for pixel art (render small and scale up to screen size)
-        screen = pygame.display.set_mode((1280, 960))
+        self.dialogue_display = pygame.Surface((1280, 960), pygame.SRCALPHA)
+
 
         # init game clock
         self.clock = pygame.time.Clock()
@@ -96,6 +97,7 @@ class Game:
         self.tilemap.load('map-big.json')
 
         # create player, enemies, npcs and light entities from spawners (and cont of enemies)
+        self.dialogue_handler = DialogueHandler(pygame.font.SysFont('Arial', 20))
         self.enemies = []
         self.light_entities = []
         self.npcs = []
@@ -128,6 +130,7 @@ class Game:
 
         # Render the text
         self.font = pygame.font.SysFont('Arial', 25)
+        self.codex = Codex(self.font, self.dialogue_display)
         self.display_text = game_text["intro"]
         self.active_text = 0
         self.messages = self.display_text[self.active_text]
@@ -137,7 +140,6 @@ class Game:
         self.active_message = 0
         self.message = self.messages[self.active_message]
         self.text_done = False
-
     def run(self):
         self.screen.blit(self.assets["background2"], (0, 0))
 
@@ -204,6 +206,7 @@ class Game:
 
         while True:
             self.display.blit(self.assets['background'], (0, 0))    # reset screen
+            self.dialogue_display.fill((0,0,0,0))
 
             # horizontal cam movement (player center - half of screen width (for centering player) - current cam position)
             self.cam[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.cam[0]) / 10
@@ -223,6 +226,7 @@ class Game:
             self.render_list = self.tilemap.render_order_offgrid(self.display, offset=render_cam)
 
             self.render_list.append(self.player.render_order(offset=render_cam))
+
 
             for enemy in self.enemies.copy():
                 enemy.update(self.tilemap, (0, 0))
@@ -260,6 +264,7 @@ class Game:
                         print(self.pictures_taken)
 
             for npc in self.npcs:
+                npc.render_proximity_text(self.player.pos, self.display, render_cam)
                 if npc.rect_offset(offset=render_cam).colliderect(self.player.rect_offset(offset=render_cam)):
                     pygame.draw.rect(self.display, (255, 0, 0), npc.rect_offset(offset=render_cam), 1)
                     #print('bumnped into npc')
@@ -299,6 +304,12 @@ class Game:
             except ZeroDivisionError:
                 self.tilemap.render_progress_bar(self.display, progress=0)
 
+            for npc in self.npcs:
+                npc.render_proximity_text(self.player.pos, self.dialogue_display, render_cam)
+
+
+
+
             #self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
             #self.player.update(self.tilemap, (self.movement[1] - self.movement[0], self.movement[2] - self.movement[3]))
 
@@ -309,21 +320,45 @@ class Game:
                     sys.exit()
 
                 # key press
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LEFT:
-                        self.movement[0] = True
-                    if event.key == pygame.K_RIGHT:
-                        self.movement[1] = True
-                    if event.key == pygame.K_a:             # move camera with w,a,s,d
-                        self.movement[0] = True
-                    if event.key == pygame.K_d:
-                        self.movement[1] = True
-                    if event.key == pygame.K_s:
-                        self.movement[2] = True
-                    if event.key == pygame.K_w:
-                        self.movement[3] = True
-                    if event.key == pygame.K_SPACE:
-                        self.flash = True
+                if self.dialogue_handler.dialogue_active:
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_RETURN and self.dialogue_handler.dialogue_active:
+                            self.dialogue_handler.next_line()
+                elif self.codex.codex_active:
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_a:
+                             self.codex.turn_page("backward")
+                        if event.key == pygame.K_d:
+                             self.codex.turn_page("forward")
+                        if event.key == pygame.K_k:
+                            self.codex.toggle_codex()
+
+
+                else:
+
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_e and npc.dialogue:  # Assuming your NPC class has this method
+                            dialogue_lines = ["Eren: Welcome, my friend. I've been expecting you. Like me, you carry the potential of the Enlightened Sentinels. We are the last of our kind, but our mission is more vital than ever.",
+                                              "good, and you? You are really great I have to say. I try to make this long enough",
+                                              "Cool"]
+                            self.dialogue_handler.start_dialogue(dialogue_lines)
+                        if event.key == pygame.K_LEFT:
+                            self.movement[0] = True
+                        if event.key == pygame.K_RIGHT:
+                            self.movement[1] = True
+                        if event.key == pygame.K_a:
+                            self.movement[0] = True
+                        if event.key == pygame.K_d:
+                            self.movement[1] = True
+                        if event.key == pygame.K_s:
+                            self.movement[2] = True
+                        if event.key == pygame.K_w:
+                            self.movement[3] = True
+                        if event.key == pygame.K_k:
+                            self.codex.toggle_codex()
+                        if event.key == pygame.K_SPACE:
+                            self.flash = True
+
 
                 # key release
                 if event.type == pygame.KEYUP:
@@ -342,8 +377,19 @@ class Game:
                     if event.key == pygame.K_SPACE:
                         self.flash = False
 
+            self.codex.render_book_icon()
+
+            # Render the codex if active
+            if self.codex.codex_active:
+                self.codex.render_codex()
             # scale and project the screen to the full display
             self.screen.blit(pygame.transform.scale(self.display, self.screen.get_size()), (0, 0))
+            if self.dialogue_handler.dialogue_active:
+                self.dialogue_handler.render_dialogue_box(self.dialogue_display)
+
+                # Blit the dialogue_surface onto the game_screen
+                # Since game_screen has been transformed, we blit the dialogue_surface over it without any transformation
+            self.screen.blit(self.dialogue_display, (0, 0))
             pygame.display.update()
 
             # keep fps at 60
