@@ -21,6 +21,9 @@ PHYSICS_TILES = {'stone': (16, 4, 0), 'decor': (16, 8, 24), }      # (width, hei
 AUTOTILE_TYPES = {}     # {'grass', 'stone'} # types of tiles that should be autotiled
 FRONT_BACK_OFFSET = {'decor':  {0: 24,
                                 1: 68,
+                                2: 24, #to be modified
+                                3: 34,  #to be modified
+                                4: 24, #to be modified
                                 },
                      'spawners':   {0: 8,
                                     1: 8,
@@ -29,6 +32,14 @@ FRONT_BACK_OFFSET = {'decor':  {0: 24,
                                     },
                      'stone':  {0: -8,
                                 1: -8,
+                                2: -8, #to be modified
+                                3: -8, #to be modified
+                                4: -8, #to be modified
+                                5: -8, #to be modified
+                                6: -8, #to be modified
+                                7: -8, #to be modified
+                                8:-8, 9:-8, 10:-8, 11:-8, 12:-8, 13:-8, #to be modified
+                                14: -8, 15: -8 #to be modified
                                 },
                      'ground_decor': {
                         0: -8,
@@ -53,6 +64,28 @@ FRONT_BACK_OFFSET = {'decor':  {0: 24,
                          5: 68,
                          6: 68,
                          7: 68,
+                     },
+                    'grass': {
+                         0: 6,
+                         1: 6,
+                         2: 6,
+                         3: 6,
+                         4: 6,
+                         5: 6,
+                         6: 6,
+                         7: 6,
+                         8: 6,
+                         9: 6,
+                        10: 6,
+                        11: 6,
+                        12: 6,
+                        13: 6,
+                        14: 6,
+                        15: 6,
+                        16: 6,
+                        17: 6,
+                        18: 6, 19:6, 20:6, 21:6, 22:6, 23:6, 24:6,25:6,26:6,27:6,28:6,28:6,29:6,30:6,31:6,32:6,33:6,34:6,35:6,36:6,37:6,38:6
+
                      }
 
                     }  # offsets for rendering front and back objects (has to be set manually)
