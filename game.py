@@ -94,30 +94,17 @@ class Game:
 
         # create tilemap
         self.tilemap = Tilemap(self)
-        self.tilemap.load('map-big.json')
-        #self.tilemap.load('map-debug.json')
 
-        # create player, enemies, npcs and light entities from spawners (and cont of enemies)
+        # initialize lists used in load_level
         self.dialogue_handler = DialogueHandler(pygame.font.SysFont('Arial', 20))
         self.enemies = []
         self.light_entities = []
         self.npcs = []
-        for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1), ('spawners', 2), ('spawners', 3), ]):
-            if spawner['variant'] == 0:
-                self.player.pos = spawner['pos']
-            elif spawner['variant'] == 1:
-                self.light_entities.append(LightEntity(self, spawner['pos'], (8, 15)))
-            elif spawner['variant'] == 2:
-                self.npcs.append(Npc(self, spawner['pos'], (18, 12)))
-            elif spawner['variant'] == 3:
-                self.enemies.append(Enemy(self, spawner['pos'], (16, 35)))
-            else:                                                            # not accessed for now
-                self.enemies.append(Enemy(self, spawner['pos'], (8, 15)))    # might have to change size
-        self.nr_enemies = len(self.enemies)
-        self.nr_light = len(self.light_entities)
+        self.nr_enemies = 0
+        self.nr_light = 0
 
         # list of rects npcs
-        self.npc_rects = [r.rect() for r in self.npcs]
+        self.npc_rects = []
 
         # variables for flash
         self.flash = False
@@ -125,9 +112,12 @@ class Game:
 
         # list to store render elements
         self.render_list = []
-            
+
         # camera position
         self.cam = [0, 0]
+
+        # dead timer
+        self.dead_timer = 0
 
         # Render the text
         self.font = pygame.font.SysFont('Arial', 25)
@@ -142,7 +132,51 @@ class Game:
         self.message = self.messages[self.active_message]
         self.text_done = False
 
+    def load_level(self):
+        # reset lists and vars
+        self.enemies = []
+        self.light_entities = []
+        self.npcs = []
+        self.nr_enemies = 0
+        self.nr_light = 0
+        self.npc_rects = []
+
+        self.tilemap.load('map-big.json')
+        #self.tilemap.load('map-debug.json')
+
+        # create player, enemies, npcs and light entities from spawners (and cont of enemies)
+        for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1), ('spawners', 2), ('spawners', 3), ]):
+            if spawner['variant'] == 0:
+                self.player.pos = spawner['pos']
+            elif spawner['variant'] == 1:
+                self.light_entities.append(LightEntity(self, spawner['pos'], (8, 15)))
+            elif spawner['variant'] == 2:
+                self.npcs.append(Npc(self, spawner['pos'], (18, 12)))
+            elif spawner['variant'] == 3:
+                self.enemies.append(Enemy(self, spawner['pos'], (16, 35)))
+            else:  # not accessed for now
+                self.enemies.append(Enemy(self, spawner['pos'], (8, 15)))  # might have to change size
+        self.nr_enemies = len(self.enemies)
+        self.nr_light = len(self.light_entities)
+
+        # list of rects npcs
+        self.npc_rects = [r.rect() for r in self.npcs]
+
+        # variables for flash
+        self.flash = False
+        self.pictures_taken = 0
+
+        # list to store render elements
+        self.render_list = []
+
+        # camera position
+        self.cam = [0, 0]
+
+        # dead timer
+        self.dead_timer = 0
+
     def run(self):
+        self.load_level()
         self.screen.blit(self.assets["background2"], (0, 0))
 
         # Update the display
@@ -152,7 +186,7 @@ class Game:
         time.sleep(1)
 
         for image in self.assets["bg_dimmed"]:
-            self.screen.blit(image, (0,0))
+            self.screen.blit(image, (0, 0))
             pygame.display.flip()
             time.sleep(0.2)
 
@@ -210,6 +244,12 @@ class Game:
             self.display.blit(self.assets['background'], (0, 0))    # reset screen
             self.dialogue_display.fill((0,0,0,0))
 
+            # delay reload after death
+            if self.dead_timer:
+                self.dead_timer += 1
+                if self.dead_timer > 40:
+                    self.load_level()
+
             # horizontal cam movement (player center - half of screen width (for centering player) - current cam position)
             self.cam[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.cam[0]) / 10
             # vertical cam movement (player center - half of screen width (for centering player) - current cam position)
@@ -219,7 +259,8 @@ class Game:
             # self.clouds.update()
             # self.clouds.render(self.display, offset=self.render_cam)
 
-            self.player.update(self.tilemap, (self.movement[1] - self.movement[0], self.movement[2] - self.movement[3]))
+            if self.dead_timer == 0:    # don't update player when dead
+                self.player.update(self.tilemap, (self.movement[1] - self.movement[0], self.movement[2] - self.movement[3]))
 
             # render order: tiles behind player, enemies, player, flash, tiles in front of player
             self.tilemap.render_back(self.display, offset=self.render_cam, player_pos=self.player.pos)
@@ -227,10 +268,21 @@ class Game:
             # list of objects to render
             self.render_list = self.tilemap.render_order_offgrid(self.display, offset=self.render_cam)
 
-            self.render_list.append(self.player.render_order(offset=self.render_cam))
+            if self.dead_timer == 0:    # don't render player when dead
+                self.render_list.append(self.player.render_order(offset=self.render_cam))
 
+            # remove enemies when attacking them
+            if 0 < self.player.attack_cd < 30:
+                attack_pos = self.player.attack_pos(offset=self.render_cam)
+                attack_rect = self.player.attack_rect(attack_pos)
+                for enemy in self.enemies:
+                    #pygame.draw.rect(self.display, (255, 255, 0), enemy.rect_offset(offset=self.render_cam),1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    if enemy.rect_offset(offset=self.render_cam).colliderect(attack_rect):
+                        self.enemies.remove(enemy)
 
             for enemy in self.enemies.copy():
+                if enemy.rect_offset(offset=self.render_cam).colliderect(self.player.rect_offset(offset=self.render_cam)):
+                    self.dead_timer += 1
                 enemy.update(self.tilemap, (0, 0))
                 self.render_list.append(enemy.render_order(offset=self.render_cam))
 
@@ -241,6 +293,10 @@ class Game:
             for npc in self.npcs.copy():
                 npc.update(self.tilemap, (0, 0))
                 self.render_list.append(npc.render_order(offset=self.render_cam))
+                npc.render_proximity_text(self.player.pos, self.display, self.render_cam)
+                if npc.rect_offset(offset=self.render_cam).colliderect(self.player.rect_offset(offset=self.render_cam)):
+                    pygame.draw.rect(self.display, (255, 0, 0), npc.rect_offset(offset=self.render_cam), 1)
+                    # print('bumnped into npc')
 
             # taking pictures and removing light entities
             if self.flash:
@@ -248,28 +304,19 @@ class Game:
                 flash_rect = self.player.flash_rect(flash_pos)
                 self.render_list.append(self.player.render_order_flash(offset=self.render_cam))
                 for light_entity in self.light_entities:
-                    pygame.draw.rect(self.display, (255, 0, 0), light_entity.rect_offset(offset=self.render_cam), 1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    pygame.draw.rect(self.display, (255, 0, 0), self.player.rect_offset(offset=self.render_cam),1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    #pygame.draw.rect(self.display, (255, 0, 0), light_entity.rect_offset(offset=self.render_cam), 1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    #pygame.draw.rect(self.display, (255, 0, 0), self.player.rect_offset(offset=self.render_cam),1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     if light_entity.rect_offset(offset=self.render_cam).colliderect(flash_rect):
                         self.pictures_taken += 1
                         self.light_entities.remove(light_entity)
                         print(self.pictures_taken)
 
-            if self.flash:
-                flash_pos = self.player.flash_pos(offset=self.render_cam)
-                flash_rect = self.player.flash_rect(flash_pos)
-                self.render_list.append(self.player.render_order_flash(offset=self.render_cam))
-                for enemy in self.enemies:
-                    pygame.draw.rect(self.display, (255, 0, 0), enemy.rect_offset(offset=self.render_cam), 1) # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    if enemy.rect_offset(offset=self.render_cam).colliderect(flash_rect):
-                        self.enemies.remove(enemy)
-                        print(self.pictures_taken)
 
-            for npc in self.npcs:
+            '''for npc in self.npcs:
                 npc.render_proximity_text(self.player.pos, self.display, self.render_cam)
                 if npc.rect_offset(offset=self.render_cam).colliderect(self.player.rect_offset(offset=self.render_cam)):
                     pygame.draw.rect(self.display, (255, 0, 0), npc.rect_offset(offset=self.render_cam), 1)
-                    #print('bumnped into npc')
+                    # print('bumnped into npc')'''
 
             # sort render list by y position
             self.render_list.sort(key=lambda x: x['pos_adj'][1])
@@ -360,22 +407,27 @@ class Game:
                             self.flash = True
 
 
-                # key release
-                if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_LEFT:
-                        self.movement[0] = False
-                    if event.key == pygame.K_RIGHT:
-                        self.movement[1] = False
-                    if event.key == pygame.K_a:
-                        self.movement[0] = False
-                    if event.key == pygame.K_d:
-                        self.movement[1] = False
-                    if event.key == pygame.K_s:
-                        self.movement[2] = False
-                    if event.key == pygame.K_w:
-                        self.movement[3] = False
-                    if event.key == pygame.K_SPACE:
-                        self.flash = False
+                    # key release
+                    if event.type == pygame.KEYUP:
+                        if event.key == pygame.K_LEFT:
+                            self.movement[0] = False
+                        if event.key == pygame.K_RIGHT:
+                            self.movement[1] = False
+                        if event.key == pygame.K_a:
+                            self.movement[0] = False
+                        if event.key == pygame.K_d:
+                            self.movement[1] = False
+                        if event.key == pygame.K_s:
+                            self.movement[2] = False
+                        if event.key == pygame.K_w:
+                            self.movement[3] = False
+                        if event.key == pygame.K_SPACE:
+                            self.flash = False
+
+                    # mouse click
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if event.button == 1:
+                            self.player.attack()
 
             self.codex.render_book_icon()
 

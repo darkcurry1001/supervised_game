@@ -26,6 +26,7 @@ class PhysicsEntity:
         self.anim_offset = (-3, -3)
         self.flip = False
         self.set_action('idle/side')
+        self.attack_cd = 0
 
     def rect(self):
         return pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
@@ -135,7 +136,7 @@ class Enemy(PhysicsEntity):
         elif random.random() < 0.01:
             self.walking_vertical = random.randint(1, 2) * 30
 
-        #movement = (0, 0.1)   # disable movement                                              # debug !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #movement = (0, 0)   # disable movement                                              # debug !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         super().update(tilemap, movement=movement)
 
         if movement[0] != 0:
@@ -222,19 +223,33 @@ class Player(PhysicsEntity):
     def update(self, tilemap, movement=(0, 0)):
         super().update(tilemap, movement=movement)
 
-        if movement[0] != 0:
-            self.set_action('run/side')
-        elif movement[1] < 0:
-            self.set_action('run/back')
-        elif movement[1] > 0:
-            self.set_action('run/front')
-        else:
-            if self.action == 'run/back':
-                self.set_action('idle/back')
-            elif self.action == 'run/front':
-                self.set_action('idle/front')
-            elif self.action == 'run/side':
-                self.set_action('idle/side')
+        if self.attack_cd == 0:                     # only update action if not currently attacking
+            if movement[0] != 0:
+                self.set_action('run/side')
+            elif movement[1] < 0:
+                self.set_action('run/back')
+            elif movement[1] > 0:
+                self.set_action('run/front')
+            else:
+                if self.action == 'run/back':
+                    self.set_action('idle/back')
+                elif self.action == 'run/front':
+                    self.set_action('idle/front')
+                elif self.action == 'run/side':
+                    self.set_action('idle/side')
+
+            # stop attacking if attack animation is over, cd is zero and new attack can be stated
+            if self.action == 'slash/side':
+                if self.attack_cd == 0:
+                    self.set_action('idle/side')
+            elif self.action == 'slash/front':
+                if self.attack_cd == 0:
+                    self.set_action('idle/front')
+            elif self.action == 'slash/back':
+                if self.attack_cd == 0:
+                    self.set_action('idle/back')
+
+        self.attack_cd = max(0, self.attack_cd - 1)
 
     def render_flash(self, flash_img, flash_pos, surf):
         surf.blit(flash_img, flash_pos)
@@ -268,6 +283,35 @@ class Player(PhysicsEntity):
 
     def kill(self):
         pass
+
+    def attack(self):
+        if self.attack_cd == 0:
+            print('log attack')
+            if self.action == 'idle/back' or self.action == 'run/back':
+                self.set_action('slash/back')
+            elif self.action == 'idle/front' or self.action == 'run/front':
+                self.set_action('slash/front')
+            elif self.action == 'idle/side' or self.action == 'run/side':
+                self.set_action('slash/side')
+            self.attack_cd = 45
+        else:
+            print('attack on cooldown')
+
+    def attack_pos(self, offset=(0, 0)):
+        attack_pos = (0, 0)
+        if self.action == 'slash/side':
+            if self.flip:
+                attack_pos = (self.pos[0] - offset[0] - 15, self.pos[1] - offset[1])  # adjust size of attack to the left
+            else:
+                attack_pos = (self.pos[0] - offset[0] + 12, self.pos[1] - offset[1])  # adjust size of attack to the right
+        elif self.action == 'slash/back':
+            attack_pos = (self.pos[0] - offset[0] - 4, self.pos[1] - offset[1] - 8)   # adjust size of attack up
+        elif self.action == 'slash/front':
+            attack_pos = (self.pos[0] - offset[0] - 4, self.pos[1] - offset[1] + 16)  # adjust size of attack down
+        return pygame.Rect(attack_pos[0], attack_pos[1], 16, 16)  # adjust size of attack rect!!!
+
+    def attack_rect(self, attack_pos):
+        return pygame.Rect(attack_pos[0], attack_pos[1], 16, 16)  # adjust size of attack rect!!!
 
 
 class Npc(PhysicsEntity):
