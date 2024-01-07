@@ -72,12 +72,14 @@ class PhysicsEntity:
                 if frame_movement[1] > 0:
                     entity_rect.bottom = rect.top
                     self.collisions['down'] = True
+
                 # moving up
                 if frame_movement[1] < 0:
                     entity_rect.top = rect.bottom
                     self.collisions['up'] = True
                 # update the players position according to it's rect
                 self.pos[1] = entity_rect.y
+
 
         if movement[0] > 0:
             self.flip = False
@@ -133,7 +135,7 @@ class Enemy(PhysicsEntity):
         elif random.random() < 0.01:
             self.walking_vertical = random.randint(1, 2) * 30
 
-        #movement = (0, 0)   # disable movement                                              # debug !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #movement = (0, 0.1)   # disable movement                                              # debug !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         super().update(tilemap, movement=movement)
 
         if movement[0] != 0:

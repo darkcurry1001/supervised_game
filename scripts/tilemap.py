@@ -16,78 +16,153 @@ AUTOTILE_MAP = {
 }
 
 PROGRESSBAR_POS = (0, 0)    # position of progressbar
-NEIGHBOR_OFFSETS = [(-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (0, 0), (-1, 1), (0, 1), (1, 1)]
-PHYSICS_TILES = {'stone': (16, 4, 0), 'decor': (16, 8, 24), }      # (width, height, vertical_offset) # set as we don't put keys (set is more efficient for lookup than list)
+
+'''
+NEIGHBOR_OFFSETS = [(2, -2), (2, -1), (2, 0), (2, 1), (2, 2),
+                    (1, -2), (1, -1), (1, 0), (1, 1), (1, 2),
+                    (0, -2), (0, -1), (0, 0), (0, 1), (0, 2),
+                    (-1, -2), (-1, -1), (-1, 0), (-1, 1), (-1, 2),
+                    (-2, -2), (-2, -1), (-2, 0), (-2, 1), (-2, 2)]    # offsets of neighbors for including big stone (slower !!!!!!!!!)
+'''
+NEIGHBOR_OFFSETS = [(1, -1), (1, 0), (1, 1),
+                    (0, -1), (0, 0), (0, 1),
+                    (-1, -1), (-1, 0), (-1, 1),
+                    (2, 0), (0, 2), (-2, 0),
+                    (1, 2), (-1, 2)]    # offsets of neighbors for big enemy
+
+'''
+NEIGHBOR_OFFSETS = [(1, -1), (1, 0), (1, 1),
+                    (0, -1), (0, 0), (0, 1),
+                    (-1, -1), (-1, 0), (-1, 1)]    # offsets of neighbors
+'''
+PHYSICS_TILES = {
+                 'stone': {0: (16, 1, 0),   # variant: (width, height, vertical_offset)
+                           1: (16, 1, 0),   # set as we don't put keys (set is more efficient for lookup than list)
+                           2: (16, 1, 0),
+                           3: (16, 0, 0),
+                           4: (16, 0, 0),
+                           5: (16, 1, 0),
+                           6: (16, 1, 0),
+                           7: (16, 1, 0),
+                           8: (16, 0, 0),
+                           9: (16, 0, 0),
+                           10: (48, 18, 0),
+                           11: (32, 12, 0),
+                           12: (32, 12, 0),
+                           13: (32, 14, 0),
+                           14: (32, 14, 0),
+                           },       # done
+                 'decor': {0: (16, 8, 24)
+                           },
+                 'water': {0: (16, 8, 0),   # variant: (width, height, vertical_offset)
+                           1: (16, 8, 0),
+                           2: (16, 8, 0),
+                           3: (16, 8, 0),
+                           4: (16, 8, 0),
+                           5: (16, 8, 0),
+                           6: (16, 8, 0),
+                           7: (16, 8, 0),
+                           8: (16, 8, 0),
+                           9: (16, 8, 0),
+                           10: (16, 8, 0),
+                           11: (16, 8, 0),
+                           12: (16, 8, 0),
+                           },       # done
+                 }
 AUTOTILE_TYPES = {}     # {'grass', 'stone'} # types of tiles that should be autotiled
-FRONT_BACK_OFFSET = {'decor':  {0: 24,
+FRONT_BACK_OFFSET = {
+                    'decor':  {0: 24,  # almost done
                                 1: 68,
-                                2: 24, #to be modified
-                                3: 34,  #to be modified
-                                4: 24, #to be modified
-                                },
-                     'spawners':   {0: 8,
-                                    1: 8,
-                                    2: 8,
-                                    3: 60,
-                                    },
-                     'stone':  {0: -8,
-                                1: -8,
-                                2: -8, #to be modified
-                                3: -8, #to be modified
-                                4: -8, #to be modified
-                                5: -8, #to be modified
-                                6: -8, #to be modified
-                                7: -8, #to be modified
-                                8:-8, 9:-8, 10:-8, 11:-8, 12:-8, 13:-8, #to be modified
-                                14: -8, 15: -8 #to be modified
-                                },
-                     'ground_decor': {
+                                2: 24,  # to be modified
+                                3: -3,  # knn thingy
+                                4: -3,  # knn thingy
+                                },           # almost done
+                    'spawners':   {0: 8,   # player
+                                    1: 8,   # light entity
+                                    2: 8,   # npc
+                                    3: 60,  # enemy
+                                    },       # irrelevant
+                    'stone':  {    # done
+                         0: -8,
+                         1: -8,
+                         2: -8,
+                         3: -12,
+                         4: -20,
+                         5: -8,
+                         6: -8,
+                         7: -8,
+                         8: -20,
+                         9: -20,
+                         10: -8,
+                         11: -8,
+                         12: -8,
+                         13: -8,
+                         14: -8,
+                         },           # done
+                    'ground_decor': {  # done
                         0: -8,
                         1: -8,
-                        2: -8,
-                        3: -8,
-                        4: -8,
-                        5: -8,
-                        6: -8,
-                        7: -8,
-                        8: -8,
-                        9: -8,
-                        10: -8,
-                        11: -8,
-                     },
-                     'tree': {
-                         0: 63,
-                         1: 68,
-                         2: 68,
-                         3: 68,
-                         4: 68,
-                         5: 68,
-                         6: 68,
-                         7: 68,
-                     },
-                    'grass': {
-                         0: 6,
-                         1: 6,
-                         2: 6,
-                         3: 6,
-                         4: 6,
-                         5: 6,
-                         6: 6,
-                         7: 6,
-                         8: 6,
-                         9: 6,
-                        10: 6,
-                        11: 6,
-                        12: 6,
-                        13: 6,
-                        14: 6,
-                        15: 6,
-                        16: 6,
-                        17: 6,
-                        18: 6, 19:6, 20:6, 21:6, 22:6, 23:6, 24:6,25:6,26:6,27:6,28:6,28:6,29:6,30:6,31:6,32:6,33:6,34:6,35:6,36:6,37:6,38:6
-
-                     }
-
+                        2: -10,
+                        3: -9,
+                        4: -30,
+                        5: -30,
+                        6: -30,
+                        7: -30,
+                        8: -30,
+                        9: -30,
+                        10: -30,
+                     },     # done
+                    'tree': {  # done
+                         0: 62,
+                         1: 62,
+                         2: 62,
+                         3: 62,
+                         4: 62,
+                         5: 62,
+                         6: 62,
+                         7: 62,
+                     },             # done
+                    'grass': {  # done
+                         0: -30,
+                         1: -30,
+                         2: -30,
+                         3: -30,
+                         4: -30,
+                         5: -30,
+                         6: -30,
+                         7: -30,
+                         8: -30,
+                         9: -30,
+                        10: -30,
+                        11: -30,
+                        12: -30,
+                        13: -30,
+                        14: -30,
+                        15: -30,
+                        16: -30,
+                        17: -30,
+                        18: -30,
+                        19: -30,
+                        20: -30,
+                        21: -30,
+                        22: -30,
+                        23: -30,
+                        24: -30,
+                        25: -30,
+                        26: -30,
+                        27: -30,
+                        28: -30,
+                        29: -30,
+                        30: -30,
+                        31: -30,
+                        32: -30,
+                        33: -30,
+                        34: -30,
+                        35: -30,
+                        36: -30,
+                        37: -30,
+                        38: -30,
+                     },            # done
                     }  # offsets for rendering front and back objects (has to be set manually)
 
 
@@ -134,7 +209,7 @@ class Tilemap:
                 tiles.append(self.tilemap[check_loc_str])
             for tile in self.offgrid_tiles:
                 if tile['pos'] == check_loc_int_offgrid:
-                    tiles.append({'type': tile['type'], 'pos': check_loc_int})
+                    tiles.append({'type': tile['type'], 'pos': check_loc_int, 'variant': tile['variant']})
             if check_loc_int in self.border:
                 tiles.append({'type': 'border element place holder', 'pos': check_loc_int})
         return tiles
@@ -142,7 +217,7 @@ class Tilemap:
     # save the tilemap to json
     def save(self, path):
         with open(path, 'w') as f:
-            json.dump({'tilemap' : self.tilemap, 'tile_size': self.tile_size, 'offgrid': self.offgrid_tiles, 'border': self.border}, f)
+            json.dump({'tilemap': self.tilemap, 'tile_size': self.tile_size, 'offgrid': self.offgrid_tiles, 'border': self.border}, f)
 
     # load tilemap from json
     def load(self, path):
@@ -167,7 +242,7 @@ class Tilemap:
         rects = []
         for tile in self.tiles_around(pos):
             if tile['type'] in PHYSICS_TILES:
-                rects.append(pygame.Rect(tile['pos'][0] * self.tile_size, tile['pos'][1] * self.tile_size + PHYSICS_TILES[tile['type']][2], PHYSICS_TILES[tile['type']][0], PHYSICS_TILES[tile['type']][1]))
+                rects.append(pygame.Rect(tile['pos'][0] * self.tile_size, tile['pos'][1] * self.tile_size + PHYSICS_TILES[tile['type']][tile['variant']][2], PHYSICS_TILES[tile['type']][tile['variant']][0], PHYSICS_TILES[tile['type']][tile['variant']][1]))
             if tile['pos'] in self.border:
                 rects.append(pygame.Rect(tile['pos'][0] * self.tile_size, tile['pos'][1] * self.tile_size, self.tile_size, self.tile_size))
         return rects

@@ -39,6 +39,7 @@ class Editor:
         # load tilemap if file is found
         try:
             self.tilemap.load('map-big.json')
+            # self.tilemap.load('map-debug.json')
         except FileNotFoundError:
             pass
 

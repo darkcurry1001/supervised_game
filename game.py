@@ -15,7 +15,7 @@ class Game:
         pygame.init()
 
         # set display name and size
-        pygame.display.set_caption('ninja game')
+        pygame.display.set_caption('Supervised game')
         self.screen = pygame.display.set_mode((1280, 960))
         self.display = pygame.Surface((320, 240))   # used for pixel art (render small and scale up to screen size)
         self.dialogue_display = pygame.Surface((1280, 960), pygame.SRCALPHA)
@@ -95,6 +95,7 @@ class Game:
         # create tilemap
         self.tilemap = Tilemap(self)
         self.tilemap.load('map-big.json')
+        #self.tilemap.load('map-debug.json')
 
         # create player, enemies, npcs and light entities from spawners (and cont of enemies)
         self.dialogue_handler = DialogueHandler(pygame.font.SysFont('Arial', 20))
@@ -140,6 +141,7 @@ class Game:
         self.active_message = 0
         self.message = self.messages[self.active_message]
         self.text_done = False
+
     def run(self):
         self.screen.blit(self.assets["background2"], (0, 0))
 
@@ -212,61 +214,61 @@ class Game:
             self.cam[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.cam[0]) / 10
             # vertical cam movement (player center - half of screen width (for centering player) - current cam position)
             self.cam[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.cam[1]) / 10
-            render_cam = (int(self.cam[0]), int(self.cam[1]))
+            self.render_cam = (int(self.cam[0]), int(self.cam[1]))
 
             # self.clouds.update()
-            # self.clouds.render(self.display, offset=render_cam)
+            # self.clouds.render(self.display, offset=self.render_cam)
 
             self.player.update(self.tilemap, (self.movement[1] - self.movement[0], self.movement[2] - self.movement[3]))
 
             # render order: tiles behind player, enemies, player, flash, tiles in front of player
-            self.tilemap.render_back(self.display, offset=render_cam, player_pos=self.player.pos)
+            self.tilemap.render_back(self.display, offset=self.render_cam, player_pos=self.player.pos)
 
             # list of objects to render
-            self.render_list = self.tilemap.render_order_offgrid(self.display, offset=render_cam)
+            self.render_list = self.tilemap.render_order_offgrid(self.display, offset=self.render_cam)
 
-            self.render_list.append(self.player.render_order(offset=render_cam))
+            self.render_list.append(self.player.render_order(offset=self.render_cam))
 
 
             for enemy in self.enemies.copy():
                 enemy.update(self.tilemap, (0, 0))
-                self.render_list.append(enemy.render_order(offset=render_cam))
+                self.render_list.append(enemy.render_order(offset=self.render_cam))
 
             for light_entity in self.light_entities.copy():
                 light_entity.update(self.tilemap, (0, 0))
-                self.render_list.append(light_entity.render_order(offset=render_cam))
+                self.render_list.append(light_entity.render_order(offset=self.render_cam))
 
             for npc in self.npcs.copy():
                 npc.update(self.tilemap, (0, 0))
-                self.render_list.append(npc.render_order(offset=render_cam))
+                self.render_list.append(npc.render_order(offset=self.render_cam))
 
             # taking pictures and removing light entities
             if self.flash:
-                flash_pos = self.player.flash_pos(offset=render_cam)
+                flash_pos = self.player.flash_pos(offset=self.render_cam)
                 flash_rect = self.player.flash_rect(flash_pos)
-                self.render_list.append(self.player.render_order_flash(offset=render_cam))
+                self.render_list.append(self.player.render_order_flash(offset=self.render_cam))
                 for light_entity in self.light_entities:
-                    pygame.draw.rect(self.display, (255, 0, 0), light_entity.rect_offset(offset=render_cam), 1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    pygame.draw.rect(self.display, (255, 0, 0), self.player.rect_offset(offset=render_cam),1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    if light_entity.rect_offset(offset=render_cam).colliderect(flash_rect):
+                    pygame.draw.rect(self.display, (255, 0, 0), light_entity.rect_offset(offset=self.render_cam), 1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    pygame.draw.rect(self.display, (255, 0, 0), self.player.rect_offset(offset=self.render_cam),1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    if light_entity.rect_offset(offset=self.render_cam).colliderect(flash_rect):
                         self.pictures_taken += 1
                         self.light_entities.remove(light_entity)
                         print(self.pictures_taken)
 
             if self.flash:
-                flash_pos = self.player.flash_pos(offset=render_cam)
+                flash_pos = self.player.flash_pos(offset=self.render_cam)
                 flash_rect = self.player.flash_rect(flash_pos)
-                self.render_list.append(self.player.render_order_flash(offset=render_cam))
+                self.render_list.append(self.player.render_order_flash(offset=self.render_cam))
                 for enemy in self.enemies:
-                    pygame.draw.rect(self.display, (255, 0, 0), enemy.rect_offset(offset=render_cam), 1) # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    if enemy.rect_offset(offset=render_cam).colliderect(flash_rect):
+                    pygame.draw.rect(self.display, (255, 0, 0), enemy.rect_offset(offset=self.render_cam), 1) # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    if enemy.rect_offset(offset=self.render_cam).colliderect(flash_rect):
                         self.enemies.remove(enemy)
                         print(self.pictures_taken)
 
             for npc in self.npcs:
-                npc.render_proximity_text(self.player.pos, self.display, render_cam)
-                if npc.rect_offset(offset=render_cam).colliderect(self.player.rect_offset(offset=render_cam)):
-                    pygame.draw.rect(self.display, (255, 0, 0), npc.rect_offset(offset=render_cam), 1)
+                npc.render_proximity_text(self.player.pos, self.display, self.render_cam)
+                if npc.rect_offset(offset=self.render_cam).colliderect(self.player.rect_offset(offset=self.render_cam)):
+                    pygame.draw.rect(self.display, (255, 0, 0), npc.rect_offset(offset=self.render_cam), 1)
                     #print('bumnped into npc')
 
             # sort render list by y position
@@ -275,28 +277,28 @@ class Game:
             # render objects in render list
             for render_object in self.render_list:
                 if render_object['type'] == 'player':
-                    self.player.render(self.display, offset=render_cam)
+                    self.player.render(self.display, offset=self.render_cam)
 
                 elif render_object['type'] == 'enemy':
                     for enemy in self.enemies:
                         if enemy.pos == list(render_object['pos']):
-                            enemy.render(self.display, offset=render_cam)
+                            enemy.render(self.display, offset=self.render_cam)
 
                 elif render_object['type'] == 'light_entity':
                     for light_entity in self.light_entities:
                         if light_entity.pos == list(render_object['pos']):
-                            light_entity.render(self.display, offset=render_cam)
+                            light_entity.render(self.display, offset=self.render_cam)
 
                 elif render_object['type'] == 'npc':
                     for npc in self.npcs:
                         if npc.pos == list(render_object['pos']):
-                            npc.render(self.display, offset=render_cam)
+                            npc.render(self.display, offset=self.render_cam)
 
                 elif render_object['type'] == 'flash':
                     self.player.render_flash(self.assets['water'][4], flash_pos, self.display)
 
                 else:
-                    self.tilemap.render_object(self.display, render_object['type'], render_object['variant'], render_object['pos'], offset=render_cam)
+                    self.tilemap.render_object(self.display, render_object['type'], render_object['variant'], render_object['pos'], offset=self.render_cam)
 
             # render progress bar last (overlay)
             try:
@@ -305,10 +307,7 @@ class Game:
                 self.tilemap.render_progress_bar(self.display, progress=0)
 
             for npc in self.npcs:
-                npc.render_proximity_text(self.player.pos, self.dialogue_display, render_cam)
-
-
-
+                npc.render_proximity_text(self.player.pos, self.dialogue_display, self.render_cam)
 
             #self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
             #self.player.update(self.tilemap, (self.movement[1] - self.movement[0], self.movement[2] - self.movement[3]))
@@ -337,11 +336,12 @@ class Game:
                 else:
 
                     if event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_e and npc.dialogue:  # Assuming your NPC class has this method
-                            dialogue_lines = ["Eren: Welcome, my friend. I've been expecting you. Like me, you carry the potential of the Enlightened Sentinels. We are the last of our kind, but our mission is more vital than ever.",
-                                              "good, and you? You are really great I have to say. I try to make this long enough",
-                                              "Cool"]
-                            self.dialogue_handler.start_dialogue(dialogue_lines)
+                        if not len(self.npcs) == 0:
+                            if event.key == pygame.K_e and npc.dialogue:  # Assuming your NPC class has this method
+                                dialogue_lines = ["Eren: Welcome, my friend. I've been expecting you. Like me, you carry the potential of the Enlightened Sentinels. We are the last of our kind, but our mission is more vital than ever.",
+                                                "good, and you? You are really great I have to say. I try to make this long enough",
+                                                "Cool"]
+                                self.dialogue_handler.start_dialogue(dialogue_lines)
                         if event.key == pygame.K_LEFT:
                             self.movement[0] = True
                         if event.key == pygame.K_RIGHT:
