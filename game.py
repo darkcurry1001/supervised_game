@@ -22,7 +22,8 @@ def knn(k, target, group_one, group_two):
     for pos in group_two:
         distances.append([calculate_distance(target, pos), 2])
 
-    neighbor_count_group_one = [element[1] for element in sorted(distances)[:k]].count(1)
+    distances = sorted(distances)[:k]
+    neighbor_count_group_one = [element[1] for element in distances].count(1)
     if neighbor_count_group_one > k // 2:
         assigned_group = 1
     else:
@@ -164,7 +165,7 @@ class Game:
         self.pictures_taken = 0
 
         if self.level == 0:
-            self.tilemap.load(f'map-big1.json')
+            self.tilemap.load(f'map-big2.json')
         elif self.level == 1:
             self.tilemap.load(f'map-big2.json')
         elif self.level == 2:
@@ -404,10 +405,10 @@ class Game:
                             knn_group_one_pos.append(tile['pos'])
                         else:
                             knn_group_two_pos.append(tile['pos'])
-                    print(knn_group_one_pos)
-                    print(knn_group_two_pos)
-                    print(target_pos)
-                    print(knn(3, target_pos, knn_group_one_pos, knn_group_two_pos))
+                    #print(knn_group_one_pos)
+                    #print(knn_group_two_pos)
+                    #print(target_pos)
+                    #print(knn(3, target_pos, knn_group_one_pos, knn_group_two_pos))
 
 
             # add event listeners

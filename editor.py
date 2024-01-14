@@ -38,7 +38,7 @@ class Editor:
 
         # load tilemap if file is found
         try:
-            self.tilemap.load('map-big_transition_test.json')
+            self.tilemap.load('map-big2.json')
             # self.tilemap.load('map-debug.json')
         except FileNotFoundError:
             pass
@@ -152,7 +152,7 @@ class Editor:
                     if event.key == pygame.K_g:             # toggle on and off grid with g
                         self.ongrid = not self.ongrid
                     if event.key == pygame.K_o:             # press o for saving
-                        self.tilemap.save('map-big_transition_test.json')
+                        self.tilemap.save('map-big2.json')
                     if event.key == pygame.K_t:             # automatically select correct variant with t
                         self.tilemap.autotile()
                     if event.key == pygame.K_b:             # press b to place tiles on border
