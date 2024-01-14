@@ -141,7 +141,9 @@ class Game:
         self.nr_light = 0
         self.npc_rects = []
 
-        self.tilemap.load('map-big.json')
+
+        self.tilemap.load('map-big2.json')
+
         #self.tilemap.load('map-debug.json')
 
         # create player, enemies, npcs and light entities from spawners (and cont of enemies)
