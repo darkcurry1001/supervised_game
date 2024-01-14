@@ -164,7 +164,7 @@ class Game:
         self.pictures_taken = 0
 
         if self.level == 0:
-            self.tilemap.load(f'map-big3.json')
+            self.tilemap.load(f'map-big1.json')
         elif self.level == 1:
             self.tilemap.load(f'map-big2.json')
         elif self.level == 2:
@@ -269,7 +269,7 @@ class Game:
             pygame.display.flip()
 
         while True:
-            if not self.dialogue_handler.dialogue_active:
+            if not self.dialogue_handler.dialogue_active and not self.codex.codex_active:
                 self.display.blit(self.assets['background'], (0, 0))    # reset screen
                 self.dialogue_display.fill((0,0,0,0))
 
@@ -394,7 +394,7 @@ class Game:
                 #self.player.update(self.tilemap, (self.movement[1] - self.movement[0], self.movement[2] - self.movement[3]))
 
                 # knn distances (only for level 3)
-                if self.level == 0:
+                if self.level == 2:
                     knn_group_one_pos = []
                     knn_group_two_pos = []
                     for tile in self.tilemap.get_knn():
@@ -430,6 +430,7 @@ class Game:
                              self.codex.turn_page("forward")
                         if event.key == pygame.K_k:
                             self.codex.toggle_codex()
+                            self.movement = [0, 0, 0, 0]
 
 
                 else:
