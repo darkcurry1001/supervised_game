@@ -1,3 +1,4 @@
+import math
 import sys
 import time
 from data.game_text import game_text
@@ -8,6 +9,25 @@ from scripts.utils import load_images
 from scripts.utils import Animation, DialogueHandler, Codex
 from scripts.tilemap import Tilemap
 from scripts.clouds import Clouds
+
+
+def calculate_distance(pos1, pos2):
+    return math.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
+
+
+def knn(k, target, group_one, group_two):
+    distances = []
+    for pos in group_one:
+        distances.append([calculate_distance(target, pos), 1])
+    for pos in group_two:
+        distances.append([calculate_distance(target, pos), 2])
+
+    neighbor_count_group_one = [element[1] for element in sorted(distances)[:k]].count(1)
+    if neighbor_count_group_one > k // 2:
+        assigned_group = 1
+    else:
+        assigned_group = 2
+    return assigned_group
 
 
 class Game:
@@ -23,6 +43,7 @@ class Game:
 
         # init game clock
         self.clock = pygame.time.Clock()
+        self.level = 0
 
         self.movement = [False, False, False, False]
 
@@ -140,9 +161,14 @@ class Game:
         self.nr_enemies = 0
         self.nr_light = 0
         self.npc_rects = []
+        self.pictures_taken = 0
 
-
-        self.tilemap.load('map-big2.json')
+        if self.level == 0:
+            self.tilemap.load(f'map-big3.json')
+        elif self.level == 1:
+            self.tilemap.load(f'map-big2.json')
+        elif self.level == 2:
+            self.tilemap.load(f'map-big3.json')
 
         #self.tilemap.load('map-debug.json')
 
@@ -243,123 +269,146 @@ class Game:
             pygame.display.flip()
 
         while True:
-            self.display.blit(self.assets['background'], (0, 0))    # reset screen
-            self.dialogue_display.fill((0,0,0,0))
+            if not self.dialogue_handler.dialogue_active:
+                self.display.blit(self.assets['background'], (0, 0))    # reset screen
+                self.dialogue_display.fill((0,0,0,0))
 
-            # delay reload after death
-            if self.dead_timer:
-                self.dead_timer += 1
-                if self.dead_timer > 40:
+                # delay reload after death
+                if self.dead_timer:
+                    self.dead_timer += 1
+                    if self.dead_timer > 40:
+                        self.load_level()
+
+                # transition to next level
+                if self.nr_light != 0 and self.pictures_taken == self.nr_light:
+                    self.level += 1
                     self.load_level()
 
-            # horizontal cam movement (player center - half of screen width (for centering player) - current cam position)
-            self.cam[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.cam[0]) / 10
-            # vertical cam movement (player center - half of screen width (for centering player) - current cam position)
-            self.cam[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.cam[1]) / 10
-            self.render_cam = (int(self.cam[0]), int(self.cam[1]))
+                # horizontal cam movement (player center - half of screen width (for centering player) - current cam position)
+                self.cam[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.cam[0]) / 10
+                # vertical cam movement (player center - half of screen width (for centering player) - current cam position)
+                self.cam[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.cam[1]) / 10
+                self.render_cam = (int(self.cam[0]), int(self.cam[1]))
 
-            # self.clouds.update()
-            # self.clouds.render(self.display, offset=self.render_cam)
+                # self.clouds.update()
+                # self.clouds.render(self.display, offset=self.render_cam)
 
-            if self.dead_timer == 0:    # don't update player when dead
-                self.player.update(self.tilemap, (self.movement[1] - self.movement[0], self.movement[2] - self.movement[3]))
+                if self.dead_timer == 0:    # don't update player when dead
+                    self.player.update(self.tilemap, (self.movement[1] - self.movement[0], self.movement[2] - self.movement[3]))
 
-            # render order: tiles behind player, enemies, player, flash, tiles in front of player
-            self.tilemap.render_back(self.display, offset=self.render_cam, player_pos=self.player.pos)
+                # render order: tiles behind player, enemies, player, flash, tiles in front of player
+                self.tilemap.render_back(self.display, offset=self.render_cam, player_pos=self.player.pos)
 
-            # list of objects to render
-            self.render_list = self.tilemap.render_order_offgrid(self.display, offset=self.render_cam)
+                # list of objects to render
+                self.render_list = self.tilemap.render_order_offgrid(self.display, offset=self.render_cam)
 
-            if self.dead_timer == 0:    # don't render player when dead
-                self.render_list.append(self.player.render_order(offset=self.render_cam))
+                if self.dead_timer == 0:    # don't render player when dead
+                    self.render_list.append(self.player.render_order(offset=self.render_cam))
 
-            # remove enemies when attacking them
-            if 0 < self.player.attack_cd < 30:
-                attack_pos = self.player.attack_pos(offset=self.render_cam)
-                attack_rect = self.player.attack_rect(attack_pos)
-                for enemy in self.enemies:
-                    #pygame.draw.rect(self.display, (255, 255, 0), enemy.rect_offset(offset=self.render_cam),1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    if enemy.rect_offset(offset=self.render_cam).colliderect(attack_rect):
-                        self.enemies.remove(enemy)
-
-            for enemy in self.enemies.copy():
-                if enemy.rect_offset(offset=self.render_cam).colliderect(self.player.rect_offset(offset=self.render_cam)):
-                    self.dead_timer += 1
-                enemy.update(self.tilemap, (0, 0))
-                self.render_list.append(enemy.render_order(offset=self.render_cam))
-
-            for light_entity in self.light_entities.copy():
-                light_entity.update(self.tilemap, (0, 0))
-                self.render_list.append(light_entity.render_order(offset=self.render_cam))
-
-            for npc in self.npcs.copy():
-                npc.update(self.tilemap, (0, 0))
-                self.render_list.append(npc.render_order(offset=self.render_cam))
-                npc.render_proximity_text(self.player.pos, self.display, self.render_cam)
-                if npc.rect_offset(offset=self.render_cam).colliderect(self.player.rect_offset(offset=self.render_cam)):
-                    pygame.draw.rect(self.display, (255, 0, 0), npc.rect_offset(offset=self.render_cam), 1)
-                    # print('bumnped into npc')
-
-            # taking pictures and removing light entities
-            if self.flash:
-                flash_pos = self.player.flash_pos(offset=self.render_cam)
-                flash_rect = self.player.flash_rect(flash_pos)
-                self.render_list.append(self.player.render_order_flash(offset=self.render_cam))
-                for light_entity in self.light_entities:
-                    #pygame.draw.rect(self.display, (255, 0, 0), light_entity.rect_offset(offset=self.render_cam), 1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    #pygame.draw.rect(self.display, (255, 0, 0), self.player.rect_offset(offset=self.render_cam),1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    if light_entity.rect_offset(offset=self.render_cam).colliderect(flash_rect):
-                        self.pictures_taken += 1
-                        self.light_entities.remove(light_entity)
-                        print(self.pictures_taken)
-
-
-            '''for npc in self.npcs:
-                npc.render_proximity_text(self.player.pos, self.display, self.render_cam)
-                if npc.rect_offset(offset=self.render_cam).colliderect(self.player.rect_offset(offset=self.render_cam)):
-                    pygame.draw.rect(self.display, (255, 0, 0), npc.rect_offset(offset=self.render_cam), 1)
-                    # print('bumnped into npc')'''
-
-            # sort render list by y position
-            self.render_list.sort(key=lambda x: x['pos_adj'][1])
-
-            # render objects in render list
-            for render_object in self.render_list:
-                if render_object['type'] == 'player':
-                    self.player.render(self.display, offset=self.render_cam)
-
-                elif render_object['type'] == 'enemy':
+                # remove enemies when attacking them
+                if 0 < self.player.attack_cd < 30:
+                    attack_pos = self.player.attack_pos(offset=self.render_cam)
+                    attack_rect = self.player.attack_rect(attack_pos)
                     for enemy in self.enemies:
-                        if enemy.pos == list(render_object['pos']):
-                            enemy.render(self.display, offset=self.render_cam)
+                        #pygame.draw.rect(self.display, (255, 255, 0), enemy.rect_offset(offset=self.render_cam),1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        if enemy.rect_offset(offset=self.render_cam).colliderect(attack_rect):
+                            self.enemies.remove(enemy)
 
-                elif render_object['type'] == 'light_entity':
+                for enemy in self.enemies.copy():
+                    if enemy.rect_offset(offset=self.render_cam).colliderect(self.player.rect_offset(offset=self.render_cam)):
+                        self.dead_timer += 1
+                    enemy.update(self.tilemap, (0, 0))
+                    self.render_list.append(enemy.render_order(offset=self.render_cam))
+
+                for light_entity in self.light_entities.copy():
+                    light_entity.update(self.tilemap, (0, 0))
+                    self.render_list.append(light_entity.render_order(offset=self.render_cam))
+
+                for npc in self.npcs.copy():
+                    npc.update(self.tilemap, (0, 0))
+                    self.render_list.append(npc.render_order(offset=self.render_cam))
+                    npc.render_proximity_text(self.player.pos, self.display, self.render_cam)
+                    if npc.rect_offset(offset=self.render_cam).colliderect(self.player.rect_offset(offset=self.render_cam)):
+                        pygame.draw.rect(self.display, (255, 0, 0), npc.rect_offset(offset=self.render_cam), 1)
+                        # print('bumnped into npc')
+
+                # taking pictures and removing light entities
+                if self.flash:
+                    flash_pos = self.player.flash_pos(offset=self.render_cam)
+                    flash_rect = self.player.flash_rect(flash_pos)
+                    self.render_list.append(self.player.render_order_flash(offset=self.render_cam))
                     for light_entity in self.light_entities:
-                        if light_entity.pos == list(render_object['pos']):
-                            light_entity.render(self.display, offset=self.render_cam)
+                        #pygame.draw.rect(self.display, (255, 0, 0), light_entity.rect_offset(offset=self.render_cam), 1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        #pygame.draw.rect(self.display, (255, 0, 0), self.player.rect_offset(offset=self.render_cam),1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        if light_entity.rect_offset(offset=self.render_cam).colliderect(flash_rect):
+                            self.pictures_taken += 1
+                            self.light_entities.remove(light_entity)
+                            print(self.pictures_taken)
 
-                elif render_object['type'] == 'npc':
-                    for npc in self.npcs:
-                        if npc.pos == list(render_object['pos']):
-                            npc.render(self.display, offset=self.render_cam)
 
-                elif render_object['type'] == 'flash':
-                    self.player.render_flash(self.assets['water'][4], flash_pos, self.display)
+                '''for npc in self.npcs:
+                    npc.render_proximity_text(self.player.pos, self.display, self.render_cam)
+                    if npc.rect_offset(offset=self.render_cam).colliderect(self.player.rect_offset(offset=self.render_cam)):
+                        pygame.draw.rect(self.display, (255, 0, 0), npc.rect_offset(offset=self.render_cam), 1)
+                        # print('bumnped into npc')'''
 
-                else:
-                    self.tilemap.render_object(self.display, render_object['type'], render_object['variant'], render_object['pos'], offset=self.render_cam)
+                # sort render list by y position
+                self.render_list.sort(key=lambda x: x['pos_adj'][1])
 
-            # render progress bar last (overlay)
-            try:
-                self.tilemap.render_progress_bar(self.display, progress=self.pictures_taken/self.nr_light)
-            except ZeroDivisionError:
-                self.tilemap.render_progress_bar(self.display, progress=0)
+                # render objects in render list
+                for render_object in self.render_list:
+                    if render_object['type'] == 'player':
+                        self.player.render(self.display, offset=self.render_cam)
 
-            for npc in self.npcs:
-                npc.render_proximity_text(self.player.pos, self.dialogue_display, self.render_cam)
+                    elif render_object['type'] == 'enemy':
+                        for enemy in self.enemies:
+                            if enemy.pos == list(render_object['pos']):
+                                enemy.render(self.display, offset=self.render_cam)
 
-            #self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
-            #self.player.update(self.tilemap, (self.movement[1] - self.movement[0], self.movement[2] - self.movement[3]))
+                    elif render_object['type'] == 'light_entity':
+                        for light_entity in self.light_entities:
+                            if light_entity.pos == list(render_object['pos']):
+                                light_entity.render(self.display, offset=self.render_cam)
+
+                    elif render_object['type'] == 'npc':
+                        for npc in self.npcs:
+                            if npc.pos == list(render_object['pos']):
+                                npc.render(self.display, offset=self.render_cam)
+
+                    elif render_object['type'] == 'flash':
+                        self.player.render_flash(self.assets['water'][4], flash_pos, self.display)
+
+                    else:
+                        self.tilemap.render_object(self.display, render_object['type'], render_object['variant'], render_object['pos'], offset=self.render_cam)
+
+                # render progress bar last (overlay)
+                try:
+                    self.tilemap.render_progress_bar(self.display, progress=self.pictures_taken/self.nr_light)
+                except ZeroDivisionError:
+                    self.tilemap.render_progress_bar(self.display, progress=0)
+
+                for npc in self.npcs:
+                    npc.render_proximity_text(self.player.pos, self.dialogue_display, self.render_cam)
+
+                #self.player.update(self.tilemap, (self.movement[1] - self.movement[0], 0))
+                #self.player.update(self.tilemap, (self.movement[1] - self.movement[0], self.movement[2] - self.movement[3]))
+
+                # knn distances (only for level 3)
+                if self.level == 0:
+                    knn_group_one_pos = []
+                    knn_group_two_pos = []
+                    for tile in self.tilemap.get_knn():
+                        if tile['variant'] == 4:
+                            target_pos = tile['pos']
+                        elif tile['variant'] == 2:
+                            knn_group_one_pos.append(tile['pos'])
+                        else:
+                            knn_group_two_pos.append(tile['pos'])
+                    print(knn_group_one_pos)
+                    print(knn_group_two_pos)
+                    print(target_pos)
+                    print(knn(3, target_pos, knn_group_one_pos, knn_group_two_pos))
+
 
             # add event listeners
             for event in pygame.event.get():
@@ -369,6 +418,7 @@ class Game:
 
                 # key press
                 if self.dialogue_handler.dialogue_active:
+                    self.movement = [0, 0, 0, 0]
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_RETURN and self.dialogue_handler.dialogue_active:
                             self.dialogue_handler.next_line()
@@ -449,4 +499,8 @@ class Game:
             # keep fps at 60
             self.clock.tick(60)
 
+
 Game().run()
+
+
+

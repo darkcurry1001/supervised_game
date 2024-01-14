@@ -52,7 +52,11 @@ PHYSICS_TILES = {
                            13: (32, 14, 0),
                            14: (32, 14, 0),
                            },       # done
-                 'decor': {0: (16, 8, 24)
+                 'decor': {0: (16, 8, 24),
+                           1: (16, 8, 24),
+                           2: (16, 8, 24),
+                           3: (16, 8, 24),
+                           4: (16, 8, 24),
                            },
                  'water': {0: (16, 8, 0),   # variant: (width, height, vertical_offset)
                            1: (16, 8, 0),
@@ -71,12 +75,12 @@ PHYSICS_TILES = {
                  }
 AUTOTILE_TYPES = {}     # {'grass', 'stone'} # types of tiles that should be autotiled
 FRONT_BACK_OFFSET = {
-                    'decor':  {0: 24,  # almost done
+                    'decor':  {0: 18,  # almost done
                                 1: 68,
-                                2: 24,  # to be modified
+                                2: -8,  # to be modified
                                 3: -3,  # knn thingy
-                                4: -3,  # knn thingy
-                                },           # almost done
+                                4: -8,  # knn thingy
+                                },      # almost done
                     'spawners':   {0: 8,   # player
                                     1: 8,   # light entity
                                     2: 8,   # npc
@@ -340,6 +344,14 @@ class Tilemap:
 
     def render_object(self, surf, type, variant, pos, offset=(0, 0)):
         surf.blit(self.game.assets[type][variant], (pos[0] - offset[0], pos[1] - offset[1]))
+
+    def get_knn(self):
+        knn_tiles = []
+        for tile in self.offgrid_tiles:
+            if tile['type'] == 'decor':
+                if tile['variant'] == 2 or tile['variant'] == 3 or tile['variant'] == 4:
+                    knn_tiles.append(tile)
+        return knn_tiles
 
 
 
