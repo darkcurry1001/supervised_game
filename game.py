@@ -249,7 +249,9 @@ class Game:
                 if event.type == pygame.QUIT:
                     waiting = False
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RIGHT and self.text_done and self.active_text < len(self.display_text)-1:
+                    if event.key == pygame.K_s:
+                        waiting = False
+                    elif self.text_done and self.active_text < len(self.display_text)-1:
                         self.screen.blit(self.assets["background2_dimmed"], (0, 0))
                         self.active_text += 1
                         self.active_message = 0
@@ -258,7 +260,7 @@ class Game:
                         self.message = self.messages[self.active_message]
                         self.text_counter = 0
                         line_counter = 0
-                    else:
+                    elif self.active_text == len(self.display_text)-1:
                         waiting = False
 
             full_text_surface = self.font.render(self.message, True, 'white')
