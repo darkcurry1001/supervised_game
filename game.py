@@ -168,7 +168,7 @@ class Game:
         self.pictures_taken = 0
 
         if self.level == 0:
-            self.tilemap.load(f'map-big2.json')
+            self.tilemap.load(f'map-big1.json')
         elif self.level == 1:
             self.tilemap.load(f'map-big2.json')
         elif self.level == 2:
