@@ -4,7 +4,7 @@ import time
 from data.game_text import game_text
 import pygame
 from scripts.entities import Player, Enemy, LightEntity, Npc
-from scripts.utils import load_image, load_transparent_images
+from scripts.utils import load_image, load_transparent_images, render_proximity, totem_data
 from scripts.utils import load_images
 from scripts.utils import Animation, DialogueHandler, Codex
 from scripts.tilemap import Tilemap
@@ -116,6 +116,9 @@ class Game:
 
         # create tilemap
         self.tilemap = Tilemap(self)
+        self.totems = []
+        self.totemid = -1
+        self.solved_totems = 0
 
         # initialize lists used in load_level
         self.dialogue_handler = DialogueHandler(pygame.font.SysFont('Arial', 20))
@@ -246,7 +249,9 @@ class Game:
                 if event.type == pygame.QUIT:
                     waiting = False
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RIGHT and self.text_done and self.active_text < len(self.display_text)-1:
+                    if event.key == pygame.K_s:
+                        waiting = False
+                    elif self.text_done and self.active_text < len(self.display_text)-1:
                         self.screen.blit(self.assets["background2_dimmed"], (0, 0))
                         self.active_text += 1
                         self.active_message = 0
@@ -255,7 +260,7 @@ class Game:
                         self.message = self.messages[self.active_message]
                         self.text_counter = 0
                         line_counter = 0
-                    else:
+                    elif self.active_text == len(self.display_text)-1:
                         waiting = False
 
             full_text_surface = self.font.render(self.message, True, 'white')
@@ -280,10 +285,13 @@ class Game:
                     if self.dead_timer > 40:
                         self.load_level()
 
+
                 # transition to next level
-                if self.nr_light != 0 and self.pictures_taken == self.nr_light:
-                    self.level += 1
-                    self.load_level()
+                if self.level == 0:
+                    if self.nr_light != 0 and self.pictures_taken == self.nr_light:
+                        self.level += 1
+                        self.load_level()
+
 
                 # horizontal cam movement (player center - half of screen width (for centering player) - current cam position)
                 self.cam[0] += (self.player.rect().centerx - self.display.get_width() / 2 - self.cam[0]) / 10
@@ -409,6 +417,17 @@ class Game:
                     #print(knn_group_two_pos)
                     #print(target_pos)
                     #print(knn(3, target_pos, knn_group_one_pos, knn_group_two_pos))
+                if self.level == 1 or self.level == 2:
+                    self.totems = self.tilemap.get_totems(self.level)
+                    for tile in self.totems:
+                        render_proximity(tile, self.player.pos, self.dialogue_display, self.render_cam)
+
+                if self.level == 1:
+                    if self.solved_totems == len(self.totems):
+                        self.level += 1
+                        self.solved_totems = 0
+                        self.totems = []
+                        self.load_level()
 
 
             # add event listeners
@@ -423,6 +442,12 @@ class Game:
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_RETURN and self.dialogue_handler.dialogue_active:
                             self.dialogue_handler.next_line()
+                        if (event.key == pygame.K_1 or event.key == pygame.K_2) and len(self.dialogue_handler.choices)>0:
+                        # Pass the player's choice to the dialogue handler
+                            choice = '1' if event.key == pygame.K_1 else '2'
+                            made_choice = self.dialogue_handler.handle_choice(choice, self.totemid)
+                            if made_choice:
+                                self.solved_totems += 1
                 elif self.codex.codex_active:
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_a:
@@ -439,7 +464,13 @@ class Game:
                     if event.type == pygame.KEYDOWN:
                         if not len(self.npcs) == 0:
                             if event.key == pygame.K_e and npc.dialogue:  # Assuming your NPC class has this method
-                                self.dialogue_handler.start_dialogue(1)
+                                self.dialogue_handler.start_dialogue(self.level)
+                        if not len(self.totems) == 0:
+                            for totem in self.totems:
+                                if totem["dialogue"] is True and event.key == pygame.K_n:
+                                    self.dialogue_handler.start_totem_dialogue(totem["index"])
+                                    self.totemid = totem["index"]
+
                         if event.key == pygame.K_LEFT:
                             self.movement[0] = True
                         if event.key == pygame.K_RIGHT:

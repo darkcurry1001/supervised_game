@@ -344,4 +344,3 @@ class Npc(PhysicsEntity):
         super().render(surf, offset=offset)
 
 
-

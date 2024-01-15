@@ -354,7 +354,20 @@ class Tilemap:
         return knn_tiles
 
 
+    def get_totems(self, level):
+        totem_tiles=[]
+        for tile in self.offgrid_tiles:
+            if tile['type'] == 'decor':
+                if tile['variant'] == 0:
+                    #tile['dialogue'] = False
+                    totem_tiles.append(tile)
+        for index, tile in enumerate(totem_tiles):
+            if level == 1:
+                tile["index"] = index
+            if level == 2:
+                tile["index"] = index + 4
 
+        return totem_tiles
 
 
 
