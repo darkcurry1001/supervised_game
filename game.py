@@ -141,10 +141,13 @@ class Game:
         self.nr_light = 0
         self.npc_rects = []
 
+        if self.level == 0:
+            self.tilemap.load(f'map-big2.json')
+        elif self.level == 1:
+            self.tilemap.load(f'map-big2.json')
+        elif self.level == 2:
+            self.tilemap.load(f'map-big3.json')
 
-        self.tilemap.load('map-big.json')
-
-        #self.tilemap.load('map-debug.json')
 
         # create player, enemies, npcs and light entities from spawners (and cont of enemies)
         for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1), ('spawners', 2), ('spawners', 3), ]):
