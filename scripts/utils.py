@@ -285,15 +285,41 @@ npc_dialogue = {
         "You: Understood. I'll do my best to unlock the wisdom of these ancient guardians.",
         "Eren: I have no doubt in your abilities. Go forth, and may the light of knowledge guide you."
     ],
-    2: ["Hello","Hi"],
+    2: ['''Eren: Ah, you've arrived at the perfect time. This board before you is not merely for play,
+         it's a representation of the k-Nearest Neighbors algorithm – a cornerstone of supervised learning.''',
+        "You: k-Nearest Neighbors? I'm not familiar with this game.",
+        '''Eren: It's less of a game and more of a method for classifying unknown data points based on their neighbors. 
+        See the lanterns here? Think of each as a point in a dataset. The small lanterns are one class, the big lanterns another. 
+        Now, your red lantern there is new data—we don't know its class yet.''',
+        "You: So, how do we determine if my red lantern is a big one or a small one?",
+        '''Eren: We look at the closest lanterns to your red one. 
+        'Closest' means they have the least distance, in terms of our board here. 
+        If we choose k to be 1, we look at the single nearest lantern to the red one. 
+        If that lantern is big, we predict your red lantern is also big. 
+        If it's small, then your lantern is deemed small.''',
+        "You: What happens when k is an even number? Wouldn't there be a tie?",
+        '''Eren: A keen observation! When k is even, there's a chance of a tie, yes. 
+        This is why we usually choose an odd number for k. 
+        Another option is to just pick one of the two classes at random.''',
+        "You: I see. So, I will choose different k values and predict my lantern’s class based on the majority class of its neighbors?",
+        '''Eren: Exactly. The totems around us will present you with various k values. 
+        For each k, you must observe the board and decide whether the red lantern would be classified as small or big. 
+        Remember, the pattern of neighbors can change with different k values, so choose wisely.''',
+        "You: Understood. I'll start with the totems now.",
+        "Eren: Good luck. Let the wisdom of the Enlightened Sentinels guide your choices. May the patterns reveal the truth to you."
+        ],
+
+    # totem responses
+    # level 1
     "totem0": ["Never forget, the eyes never lie: blue, black and green, those are the colors bestowed upon light entities, everything else is but a sham"],
     "totem1": ["No matter the length the creatures of darkness go to, they will never fully appear of the light. Look for spots of darkness,a leg or maybe a hand, to tell them apart"],
     "totem2": ["A missing or lacking aura around the entities is a dead giveaway for those posers belonging to the darkness"],
     "totem3": ["I shall give you a helping hand: The aura of a light entity guides us on the right path. It shall never be dark."],
-    "totem4": ["bla4"],
-    "totem5": ["bla5"],
-    "totem6": ["bla6"],
-    "totem7": ["bla7"]
+    # level 2
+    "totem4": ["For knn with k=1 the red lantern is classified as big"],
+    "totem6": ["For knn with k=3 the red lantern is classified as small"],
+    "totem7": ["For knn with k=7 the red lantern is classified as small"],
+    "totem5": ["for knn with k=13 the red lantern is classified as big"],
 }
 
 totem_data = {
@@ -342,47 +368,49 @@ totem_data = {
         },
     'correct': "2"
     },
-    4:{'question': "The totem asks you a question 4...",
+    4:{'question': "What class would our new sample lantern be predicted as if k=1?",
     'options': [
-        "Option 1: The first choice",
-        "Option 2: The second choice"
+        "Option 1: Class big lantern",
+        "Option 2: Class small lantern"
     ],
     'response': {
-        '1': "The totem's response to the first choice",
-        '2': "The totem's response to the second choice"
+        '1': """Exactly but as you can see it might not be the class that fits our sample lantern the best.
+             This happens because we only look at the closest neighbor which happens to be an outlier in our case.
+             Outliers can have a big impact on the prediction especially if k is small""",
+        '2': "Wrong, take a closer look at the closest lantern"
         },
     'correct': "1"
     },
-    5:{'question': "The totem asks you a question 4...",
+    6:{'question': "What class would our new sample lantern be predicted as if k=3?",
     'options': [
-        "Option 1: The first choice",
-        "Option 2: The second choice"
+        "Option 1: Class big lantern",
+        "Option 2: Class small lantern"
     ],
     'response': {
-        '1': "The totem's response to the first choice",
-        '2': "The totem's response to the second choice"
+        '1': "Wrong, take a closer look.",
+        '2': "That's right! The majority of the closest neighbors are small lanterns so our new sample lantern will be predicted as a small lantern."
         },
-    'correct': "1"
+    'correct': "2"
     },
-    6:{'question': "The totem asks you a question 4...",
+    7:{'question': "What class would our new sample lantern be predicted as if k=7?",
     'options': [
-        "Option 1: The first choice",
-        "Option 2: The second choice"
+        "Option 1: Class big lantern",
+        "Option 2: Class small lantern"
     ],
     'response': {
-        '1': "The totem's response to the first choice",
-        '2': "The totem's response to the second choice"
+        '1': "You might want to try this one again.",
+        '2': "You seem to get the hang of it. As before, the majority of the closest neighbors are small lanterns."
         },
-    'correct': "1"
+    'correct': "2"
     },
-    7:{'question': "The totem asks you a question 4...",
+    5:{'question': "What class would our new sample lantern be predicted as if k=13?",
     'options': [
-        "Option 1: The first choice",
-        "Option 2: The second choice"
+        "Option 1: Class big lantern",
+        "Option 2: Class small lantern"
     ],
     'response': {
-        '1': "The totem's response to the first choice",
-        '2': "The totem's response to the second choice"
+        '1': "Correct! In the case where k is equal to the number of data points in the dataset, the prediction will always be the same as the majority class.",
+        '2': "By now you should know the answer to this one!"
         },
     'correct': "1"
     }

@@ -286,7 +286,6 @@ class Player(PhysicsEntity):
 
     def attack(self):
         if self.attack_cd == 0:
-            print('log attack')
             if self.action == 'idle/back' or self.action == 'run/back':
                 self.set_action('slash/back')
             elif self.action == 'idle/front' or self.action == 'run/front':

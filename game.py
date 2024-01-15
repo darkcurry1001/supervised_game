@@ -337,9 +337,7 @@ class Game:
                     npc.update(self.tilemap, (0, 0))
                     self.render_list.append(npc.render_order(offset=self.render_cam))
                     npc.render_proximity_text(self.player.pos, self.display, self.render_cam)
-                    if npc.rect_offset(offset=self.render_cam).colliderect(self.player.rect_offset(offset=self.render_cam)):
-                        pygame.draw.rect(self.display, (255, 0, 0), npc.rect_offset(offset=self.render_cam), 1)
-                        # print('bumnped into npc')
+
 
                 # taking pictures and removing light entities
                 if self.flash:
@@ -354,12 +352,6 @@ class Game:
                             self.light_entities.remove(light_entity)
                             print(self.pictures_taken)
 
-
-                '''for npc in self.npcs:
-                    npc.render_proximity_text(self.player.pos, self.display, self.render_cam)
-                    if npc.rect_offset(offset=self.render_cam).colliderect(self.player.rect_offset(offset=self.render_cam)):
-                        pygame.draw.rect(self.display, (255, 0, 0), npc.rect_offset(offset=self.render_cam), 1)
-                        # print('bumnped into npc')'''
 
                 # sort render list by y position
                 self.render_list.sort(key=lambda x: x['pos_adj'][1])
@@ -391,10 +383,11 @@ class Game:
                         self.tilemap.render_object(self.display, render_object['type'], render_object['variant'], render_object['pos'], offset=self.render_cam)
 
                 # render progress bar last (overlay)
-                try:
-                    self.tilemap.render_progress_bar(self.display, progress=self.pictures_taken/self.nr_light)
-                except ZeroDivisionError:
-                    self.tilemap.render_progress_bar(self.display, progress=0)
+                if self.level == 0:
+                    try:
+                        self.tilemap.render_progress_bar(self.display, progress=self.pictures_taken/self.nr_light)
+                    except ZeroDivisionError:
+                        self.tilemap.render_progress_bar(self.display, progress=0)
 
                 for npc in self.npcs:
                     npc.render_proximity_text(self.player.pos, self.dialogue_display, self.render_cam)
