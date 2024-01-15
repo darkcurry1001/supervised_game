@@ -439,10 +439,7 @@ class Game:
                     if event.type == pygame.KEYDOWN:
                         if not len(self.npcs) == 0:
                             if event.key == pygame.K_e and npc.dialogue:  # Assuming your NPC class has this method
-                                dialogue_lines = ["Eren: Welcome, my friend. I've been expecting you. Like me, you carry the potential of the Enlightened Sentinels. We are the last of our kind, but our mission is more vital than ever.",
-                                                "good, and you? You are really great I have to say. I try to make this long enough",
-                                                "Cool"]
-                                self.dialogue_handler.start_dialogue(dialogue_lines)
+                                self.dialogue_handler.start_dialogue(1)
                         if event.key == pygame.K_LEFT:
                             self.movement[0] = True
                         if event.key == pygame.K_RIGHT:
