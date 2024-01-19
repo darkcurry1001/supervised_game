@@ -17,24 +17,12 @@ AUTOTILE_MAP = {
 
 PROGRESSBAR_POS = (0, 0)    # position of progressbar
 
-'''
-NEIGHBOR_OFFSETS = [(2, -2), (2, -1), (2, 0), (2, 1), (2, 2),
-                    (1, -2), (1, -1), (1, 0), (1, 1), (1, 2),
-                    (0, -2), (0, -1), (0, 0), (0, 1), (0, 2),
-                    (-1, -2), (-1, -1), (-1, 0), (-1, 1), (-1, 2),
-                    (-2, -2), (-2, -1), (-2, 0), (-2, 1), (-2, 2)]    # offsets of neighbors for including big stone (slower !!!!!!!!!)
-'''
 NEIGHBOR_OFFSETS = [(1, -1), (1, 0), (1, 1),
                     (0, -1), (0, 0), (0, 1),
                     (-1, -1), (-1, 0), (-1, 1),
                     (2, 0), (0, 2), (-2, 0),
                     (1, 2), (-1, 2)]    # offsets of neighbors for big enemy
 
-'''
-NEIGHBOR_OFFSETS = [(1, -1), (1, 0), (1, 1),
-                    (0, -1), (0, 0), (0, 1),
-                    (-1, -1), (-1, 0), (-1, 1)]    # offsets of neighbors
-'''
 PHYSICS_TILES = {
                  'stone': {0: (16, 1, 0),   # variant: (width, height, vertical_offset)
                            1: (16, 1, 0),   # set as we don't put keys (set is more efficient for lookup than list)
