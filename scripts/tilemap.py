@@ -73,6 +73,7 @@ FRONT_BACK_OFFSET = {
                                     1: 8,   # light entity
                                     2: 8,   # npc
                                     3: 60,  # enemy
+                                    4: 8,   # shadow entity
                                     },       # irrelevant
                     'stone':  {    # done
                          0: -8,

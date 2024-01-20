@@ -3,7 +3,7 @@ import sys
 import time
 from data.game_text import game_text
 import pygame
-from scripts.entities import Player, Enemy, LightEntity, Npc
+from scripts.entities import Player, Enemy, LightEntity, Npc, ShadowEyeGlowEntity
 from scripts.utils import load_image, load_transparent_images, render_proximity, totem_data
 from scripts.utils import load_images
 from scripts.utils import Animation, DialogueHandler, Codex
@@ -44,7 +44,7 @@ class Game:
 
         # init game clock
         self.clock = pygame.time.Clock()
-        self.level = 0
+        self.level = 2
 
         self.movement = [False, False, False, False]
 
@@ -63,12 +63,6 @@ class Game:
             "bg_dimmed": load_images("background/start"),
 
             'player': load_image('entities/player.png'),
-            #'clouds': load_images('clouds'),
-            #'player/idle': Animation(load_images('entities/player/idle'), img_dur=6),
-            #'player/run': Animation(load_images('entities/player/run'), img_dur=5),
-            #'player/jump': Animation(load_images('entities/player/jump')),
-            #'player/slide': Animation(load_images('entities/player/slide')),
-            #'player/wall_slide': Animation(load_images('entities/player/wall_slide')),
             'player/idle/side': Animation(load_images('entities/player/idle/side'), img_dur=6),
             'player/idle/front': Animation(load_images('entities/player/idle/front'), img_dur=6),
             'player/idle/back': Animation(load_images('entities/player/idle/back'), img_dur=6),
@@ -108,9 +102,6 @@ class Game:
 
         }
 
-        # create clouds
-        # self.clouds = Clouds(self.assets['clouds'], count=16)
-
         # create player
         self.player = Player(self, (50, 50), (8, 17))
 
@@ -124,9 +115,10 @@ class Game:
         self.dialogue_handler = DialogueHandler(pygame.font.SysFont('Arial', 20))
         self.enemies = []
         self.light_entities = []
+        self.shadow_eye_glow = []
         self.npcs = []
         self.nr_enemies = 0
-        self.nr_light = 0
+        self.nr_light_and_shadow = 0
 
         # list of rects npcs
         self.npc_rects = []
@@ -161,9 +153,10 @@ class Game:
         # reset lists and vars
         self.enemies = []
         self.light_entities = []
+        self.shadow_eye_glow = []
         self.npcs = []
         self.nr_enemies = 0
-        self.nr_light = 0
+        self.nr_light_and_shadow = 0
         self.npc_rects = []
         self.pictures_taken = 0
 
@@ -177,7 +170,7 @@ class Game:
         #self.tilemap.load('map-debug.json')
 
         # create player, enemies, npcs and light entities from spawners (and cont of enemies)
-        for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1), ('spawners', 2), ('spawners', 3), ]):
+        for spawner in self.tilemap.extract([('spawners', 0), ('spawners', 1), ('spawners', 2), ('spawners', 3), ('spawners', 4), ]):
             if spawner['variant'] == 0:
                 self.player.pos = spawner['pos']
             elif spawner['variant'] == 1:
@@ -186,10 +179,12 @@ class Game:
                 self.npcs.append(Npc(self, spawner['pos'], (18, 12)))
             elif spawner['variant'] == 3:
                 self.enemies.append(Enemy(self, spawner['pos'], (16, 35)))
+            elif spawner['variant'] == 4:
+                self.shadow_eye_glow.append(ShadowEyeGlowEntity(self, spawner['pos'], (8, 15)))
             else:  # not accessed for now
                 self.enemies.append(Enemy(self, spawner['pos'], (8, 15)))  # might have to change size
         self.nr_enemies = len(self.enemies)
-        self.nr_light = len(self.light_entities)
+        self.nr_light_and_shadow = len(self.light_entities) + len(self.shadow_eye_glow)
 
         # list of rects npcs
         self.npc_rects = [r.rect() for r in self.npcs]
@@ -288,7 +283,7 @@ class Game:
 
                 # transition to next level
                 if self.level == 0:
-                    if self.nr_light != 0 and self.pictures_taken == self.nr_light:
+                    if self.nr_light_and_shadow != 0 and self.pictures_taken == self.nr_light_and_shadow:
                         self.level += 1
                         self.load_level()
 
@@ -298,9 +293,6 @@ class Game:
                 # vertical cam movement (player center - half of screen width (for centering player) - current cam position)
                 self.cam[1] += (self.player.rect().centery - self.display.get_height() / 2 - self.cam[1]) / 10
                 self.render_cam = (int(self.cam[0]), int(self.cam[1]))
-
-                # self.clouds.update()
-                # self.clouds.render(self.display, offset=self.render_cam)
 
                 if self.dead_timer == 0:    # don't update player when dead
                     self.player.update(self.tilemap, (self.movement[1] - self.movement[0], self.movement[2] - self.movement[3]))
@@ -333,24 +325,30 @@ class Game:
                     light_entity.update(self.tilemap, (0, 0))
                     self.render_list.append(light_entity.render_order(offset=self.render_cam))
 
+                for shadow_entity in self.shadow_eye_glow.copy():
+                    shadow_entity.update(self.tilemap, (0, 0))
+                    self.render_list.append(shadow_entity.render_order(offset=self.render_cam))
+
                 for npc in self.npcs.copy():
                     npc.update(self.tilemap, (0, 0))
                     self.render_list.append(npc.render_order(offset=self.render_cam))
                     npc.render_proximity_text(self.player.pos, self.display, self.render_cam)
 
 
-                # taking pictures and removing light entities
+                # taking pictures and removing light and shadow entities
                 if self.flash:
                     flash_pos = self.player.flash_pos(offset=self.render_cam)
                     flash_rect = self.player.flash_rect(flash_pos)
                     self.render_list.append(self.player.render_order_flash(offset=self.render_cam))
                     for light_entity in self.light_entities:
-                        #pygame.draw.rect(self.display, (255, 0, 0), light_entity.rect_offset(offset=self.render_cam), 1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                        #pygame.draw.rect(self.display, (255, 0, 0), self.player.rect_offset(offset=self.render_cam),1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         if light_entity.rect_offset(offset=self.render_cam).colliderect(flash_rect):
                             self.pictures_taken += 1
                             self.light_entities.remove(light_entity)
-                            print(self.pictures_taken)
+                    for shadow_entity in self.shadow_eye_glow:
+                        #pygame.draw.rect(self.display, (255, 255, 0), shadow_entity.rect_offset(offset=self.render_cam),1)  # debug purpose only, delete later !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        if shadow_entity.rect_offset(offset=self.render_cam).colliderect(flash_rect):
+                            self.pictures_taken += 1
+                            self.shadow_eye_glow.remove(shadow_entity)
 
 
                 # sort render list by y position
@@ -371,13 +369,18 @@ class Game:
                             if light_entity.pos == list(render_object['pos']):
                                 light_entity.render(self.display, offset=self.render_cam)
 
+                    elif render_object['type'] == 'shadow_entity':
+                        for shadow_entity in self.shadow_eye_glow:
+                            if shadow_entity.pos == list(render_object['pos']):
+                                shadow_entity.render(self.display, offset=self.render_cam)
+
                     elif render_object['type'] == 'npc':
                         for npc in self.npcs:
                             if npc.pos == list(render_object['pos']):
                                 npc.render(self.display, offset=self.render_cam)
 
                     elif render_object['type'] == 'flash':
-                        self.player.render_flash(self.assets['water'][4], flash_pos, self.display)
+                        self.player.render_flash(self.assets['grass'][37], flash_pos, self.display)
 
                     else:
                         self.tilemap.render_object(self.display, render_object['type'], render_object['variant'], render_object['pos'], offset=self.render_cam)
@@ -385,7 +388,7 @@ class Game:
                 # render progress bar last (overlay)
                 if self.level == 0:
                     try:
-                        self.tilemap.render_progress_bar(self.display, progress=self.pictures_taken/self.nr_light)
+                        self.tilemap.render_progress_bar(self.display, progress=self.pictures_taken/self.nr_light_and_shadow)
                     except ZeroDivisionError:
                         self.tilemap.render_progress_bar(self.display, progress=0)
 
@@ -406,10 +409,7 @@ class Game:
                             knn_group_one_pos.append(tile['pos'])
                         else:
                             knn_group_two_pos.append(tile['pos'])
-                    #print(knn_group_one_pos)
-                    #print(knn_group_two_pos)
-                    #print(target_pos)
-                    #print(knn(3, target_pos, knn_group_one_pos, knn_group_two_pos))
+
                 if self.level == 1 or self.level == 2:
                     self.totems = self.tilemap.get_totems(self.level)
                     for tile in self.totems:
@@ -435,9 +435,15 @@ class Game:
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_RETURN and self.dialogue_handler.dialogue_active:
                             self.dialogue_handler.next_line()
-                        if (event.key == pygame.K_1 or event.key == pygame.K_2) and len(self.dialogue_handler.choices)>0:
+                        if (event.key == pygame.K_1 or event.key == pygame.K_2 or event.key == pygame.K_3) and len(self.dialogue_handler.choices)>0:
                         # Pass the player's choice to the dialogue handler
-                            choice = '1' if event.key == pygame.K_1 else '2'
+                            if event.key == pygame.K_1:
+                                choice = '1'
+                            elif event.key == pygame.K_2:
+                                choice = '2'
+                            else:
+                                choice = '3'
+                            #choice = '1' if event.key == pygame.K_1 else '2'
                             made_choice = self.dialogue_handler.handle_choice(choice, self.totemid)
                             if made_choice:
                                 self.solved_totems += 1

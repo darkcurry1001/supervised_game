@@ -59,7 +59,7 @@ class DialogueHandler:
         screen_width = 1280
         screen_height = 960
         self.dialogue_active = False
-        self.dialogue_box_rect = pygame.Rect(50, screen_height - 170, screen_width - 100, 140)
+        self.dialogue_box_rect = pygame.Rect(50, screen_height - 180, screen_width - 100, 170)
         self.current_line_index = 0
         self.dialogue_lines = []
         self.choices = []  # To store possible choices for the player
@@ -96,6 +96,8 @@ class DialogueHandler:
         Handle the player's choice and show the totem's response.
         """
 
+        if totemid < 4 and choice == '3':
+            return False
         self.current_line_index += 1  # Move to the response part
         self.dialogue_lines.append(self.response[choice])
         if choice == self.correct:
@@ -325,8 +327,8 @@ npc_dialogue = {
 totem_data = {
     0:{'question': "Let's see if you are worthy! Here's a small test: In supervised learning, the model is trained only on unlabeled data.",
     'options': [
-        "Press 1: True",
-        "Press 2: False"
+        "Option 1: True",
+        "Option 2: False"
     ],
     'response': {
         '2': "Not bad, young one! Never forget, the eyes never lie: blue, black and green, those are the colors bestowed upon light entities, everything else is but a sham",
@@ -371,46 +373,54 @@ totem_data = {
     4:{'question': "What class would our new sample lantern be predicted as if k=1?",
     'options': [
         "Option 1: Class big lantern",
-        "Option 2: Class small lantern"
+        "Option 2: Class small lantern",
+        "Option 3: Let me check the board again"
     ],
     'response': {
         '1': """Exactly but as you can see it might not be the class that fits our sample lantern the best.
              This happens because we only look at the closest neighbor which happens to be an outlier in our case.
              Outliers can have a big impact on the prediction especially if k is small""",
-        '2': "Wrong, take a closer look at the closest lantern"
+        '2': "Wrong, take a closer look at the closest lantern",
+        '3': "Alright, take your time"
         },
     'correct': "1"
     },
     6:{'question': "What class would our new sample lantern be predicted as if k=3?",
     'options': [
         "Option 1: Class big lantern",
-        "Option 2: Class small lantern"
+        "Option 2: Class small lantern",
+        "Option 3: Let me check the board again"
     ],
     'response': {
         '1': "Wrong, take a closer look.",
-        '2': "That's right! The majority of the closest neighbors are small lanterns so our new sample lantern will be predicted as a small lantern."
+        '2': "That's right! The majority of the closest neighbors are small lanterns so our new sample lantern will be predicted as a small lantern.",
+        '3': "Alright, take your time"
         },
     'correct': "2"
     },
     7:{'question': "What class would our new sample lantern be predicted as if k=7?",
     'options': [
         "Option 1: Class big lantern",
-        "Option 2: Class small lantern"
+        "Option 2: Class small lantern",
+        "Option 3: Let me check the board again"
     ],
     'response': {
         '1': "You might want to try this one again.",
-        '2': "You seem to get the hang of it. As before, the majority of the closest neighbors are small lanterns."
+        '2': "You seem to get the hang of it. As before, the majority of the closest neighbors are small lanterns.",
+        '3': "Alright, take your time"
         },
     'correct': "2"
     },
     5:{'question': "What class would our new sample lantern be predicted as if k=13?",
     'options': [
         "Option 1: Class big lantern",
-        "Option 2: Class small lantern"
+        "Option 2: Class small lantern",
+        "Option 3: Let me check the board again"
     ],
     'response': {
         '1': "Correct! In the case where k is equal to the number of data points in the dataset, the prediction will always be the same as the majority class.",
-        '2': "By now you should know the answer to this one!"
+        '2': "By now you should know the answer to this one!",
+        '3': "Alright, take your time"
         },
     'correct': "1"
     }
