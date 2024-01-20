@@ -44,7 +44,7 @@ class Game:
 
         # init game clock
         self.clock = pygame.time.Clock()
-        self.level = 2
+        self.level = 0
 
         self.movement = [False, False, False, False]
 
